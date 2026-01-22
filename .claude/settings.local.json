@@ -48,7 +48,8 @@
       "Bash(grep:*)",
       "Bash(./test-python-version.sh:*)",
       "Bash(../python/simple-test.sh)",
-      "Bash(./simple-test.sh:*)"
+      "Bash(./simple-test.sh:*)",
+      "Bash(ls:*)"
     ]
   }
 }

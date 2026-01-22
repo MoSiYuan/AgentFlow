@@ -155,6 +155,180 @@ func (w *Worker) Stop() {
 	close(w.stopCh)
 }
 
+// RunOneShot executes one task and exits (one-shot mode)
+func (w *Worker) RunOneShot(ctx context.Context) (string, error) {
+	w.logger.WithFields(logrus.Fields{
+		"worker_id": w.id,
+		"group":     w.groupName,
+		"type":      w.workerType,
+	}).Info("Starting one-shot worker")
+
+	// Register with master
+	if err := w.register(); err != nil {
+		return "", fmt.Errorf("注册失败: %w", err)
+	}
+
+	// Start heartbeat in background
+	heartbeatCtx, heartbeatCancel := context.WithCancel(ctx)
+	defer heartbeatCancel()
+
+	go w.heartbeatLoop(heartbeatCtx)
+
+	// Give some time for registration
+	time.Sleep(1 * time.Second)
+
+	// Try to get and execute a task
+	return w.executeOneTask(ctx)
+}
+
+// heartbeatLoop runs heartbeat until context is cancelled
+func (w *Worker) heartbeatLoop(ctx context.Context) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := w.sendHeartbeat(); err != nil {
+				w.logger.WithError(err).Warn("发送心跳失败")
+			}
+		}
+	}
+}
+
+// executeOneTask tries to fetch and execute one task
+func (w *Worker) executeOneTask(ctx context.Context) (string, error) {
+	// Local mode: read from database
+	if w.db != nil {
+		return w.executeOneLocalTask(ctx)
+	}
+
+	// Remote mode: fetch from master API
+	return w.executeOneRemoteTask(ctx)
+}
+
+// executeOneLocalTask executes one task from local database
+func (w *Worker) executeOneLocalTask(ctx context.Context) (string, error) {
+	tasks, err := w.db.ListTasks("pending", w.groupName)
+	if err != nil {
+		return "", fmt.Errorf("获取任务失败: %w", err)
+	}
+
+	if len(tasks) == 0 {
+		w.logger.Info("No pending tasks")
+		return "", nil
+	}
+
+	// Try to lock first task
+	task := tasks[0]
+	locked, err := w.db.LockTask(task.ID, w.id)
+	if err != nil {
+		return "", fmt.Errorf("锁定任务失败: %w", err)
+	}
+
+	if !locked {
+		w.logger.Info("No available tasks (all locked)")
+		return "", nil
+	}
+
+	w.logger.WithField("task_id", task.ID).Info("开始执行任务 (OneShot)")
+
+	// Execute task
+	result, err := w.executeTask(&task)
+
+	// Complete or fail task
+	if err != nil {
+		if failErr := w.db.FailTask(task.ID, w.id, err.Error()); failErr != nil {
+			w.logger.WithError(failErr).Error("标记任务失败错误")
+		}
+		return "", err
+	}
+
+	if completeErr := w.db.CompleteTask(task.ID, w.id, result); completeErr != nil {
+		w.logger.WithError(completeErr).Error("完成任务错误")
+	}
+
+	w.logger.WithField("task_id", task.ID).Info("任务已完成 (OneShot)")
+	return result, nil
+}
+
+// executeOneRemoteTask executes one task from remote master
+func (w *Worker) executeOneRemoteTask(ctx context.Context) (string, error) {
+	url := fmt.Sprintf("%s/api/v1/tasks/pending?group=%s", w.masterURL, w.groupName)
+
+	resp, err := w.client.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("获取任务失败: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNoContent {
+		w.logger.Info("No pending tasks")
+		return "", nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("获取任务失败: %s", resp.Status)
+	}
+
+	var pendingResp PendingTasksResponse
+	if err := json.NewDecoder(resp.Body).Decode(&pendingResp); err != nil {
+		return "", fmt.Errorf("解析响应失败: %w", err)
+	}
+
+	if len(pendingResp.Tasks) == 0 {
+		w.logger.Info("No pending tasks")
+		return "", nil
+	}
+
+	// Try to lock first task
+	task := pendingResp.Tasks[0]
+	lockURL := fmt.Sprintf("%s/api/v1/tasks/%s/lock", w.masterURL, task.ID)
+
+	lockData := map[string]string{"worker_id": w.id}
+	lockBody, _ := json.Marshal(lockData)
+
+	lockResp, err := http.Post(lockURL, "application/json", bytes.NewBuffer(lockBody))
+	if err != nil {
+		return "", fmt.Errorf("锁定任务失败: %w", err)
+	}
+	defer lockResp.Body.Close()
+
+	if lockResp.StatusCode == http.StatusConflict {
+		w.logger.Info("No available tasks (all locked)")
+		return "", nil
+	}
+
+	if lockResp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("锁定任务失败: %s", lockResp.Status)
+	}
+
+	w.logger.WithField("task_id", task.ID).Info("开始执行任务 (OneShot)")
+
+	// Fetch task details
+	taskDetail, err := w.fetchTaskDetail(task.ID)
+	if err != nil {
+		w.unlockTask(task.ID)
+		return "", fmt.Errorf("获取任务详情失败: %w", err)
+	}
+
+	// Execute task
+	result, err := w.executeTaskDetail(taskDetail)
+
+	// Complete or fail task
+	if err != nil {
+		w.failTask(task.ID, err.Error())
+		return "", fmt.Errorf("任务执行失败: %w", err)
+	}
+
+	w.completeTask(task.ID, result)
+
+	w.logger.WithField("task_id", task.ID).Info("任务已完成 (OneShot)")
+	return result, nil
+}
+
 func (w *Worker) register() error {
 	// For local workers, register directly in database
 	if w.db != nil {

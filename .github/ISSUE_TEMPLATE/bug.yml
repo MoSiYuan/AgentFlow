@@ -1,0 +1,15 @@
+name: Bug Report
+description: 创建 bug 报告
+title: '[Bug] '
+labels: bug
+body:
+  - **CPDS 版本**:
+  - **Go 版本**:
+  - **操作系统**:
+  - **重现步骤**:
+    1.
+  - 2.
+  - **预期行为**:
+  - **实际行为**:
+  - **日志输出**:
+  - **其他信息**:

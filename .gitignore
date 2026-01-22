@@ -1,0 +1,49 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+agentflow
+agentflow-*
+
+# Test binaries
+*.test
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+ctest_pure.db
+
+# Workspace
+cpds-workspace/
+agentflow-workspace/
+workspace/
+
+# Test results
+ctest_stories/
+test_results/
+
+# Go
+*.mod.sum
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/tmp/
+
+# Temporary files
+*.tmp
+*.bak

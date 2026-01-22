@@ -89,3 +89,52 @@ SELECT
     SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_tasks
 FROM tasks
 GROUP BY group_name;
+
+-- Git Integration Tables
+CREATE TABLE IF NOT EXISTS git_tasks (
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    description TEXT,
+    agent_id TEXT,
+    git_branch TEXT NOT NULL UNIQUE,
+    file_boundaries TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    assigned_at DATETIME,
+    completed_at DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS git_locks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id TEXT NOT NULL,
+    agent_id TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    lock_type TEXT NOT NULL,
+    acquired_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    released_at DATETIME,
+    status TEXT DEFAULT 'active',
+    FOREIGN KEY (task_id) REFERENCES git_tasks(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS git_conflicts (
+    id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL,
+    agent_id TEXT NOT NULL,
+    conflict_type TEXT NOT NULL,
+    file_paths TEXT,
+    description TEXT,
+    severity TEXT DEFAULT 'medium',
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    resolved_at DATETIME,
+    resolved_by TEXT,
+    resolution TEXT,
+    FOREIGN KEY (task_id) REFERENCES git_tasks(id) ON DELETE CASCADE
+);
+
+-- Git Integration Indexes
+CREATE INDEX IF NOT EXISTS idx_git_tasks_status ON git_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_git_tasks_agent ON git_tasks(agent_id);
+CREATE INDEX IF NOT EXISTS idx_git_locks_file ON git_locks(file_path);
+CREATE INDEX IF NOT EXISTS idx_git_locks_status ON git_locks(status);
+CREATE INDEX IF NOT EXISTS idx_git_conflicts_status ON git_conflicts(status);

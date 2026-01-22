@@ -1,0 +1,92 @@
+{
+  "agent-frontend": [
+    {
+      "file_pattern": "src/frontend/**/*",
+      "access_type": "exclusive",
+      "description": "Frontend agent exclusively manages frontend UI code"
+    },
+    {
+      "file_pattern": "src/api/types.ts",
+      "access_type": "readonly",
+      "description": "Frontend agent can read TypeScript type definitions"
+    },
+    {
+      "file_pattern": "public/**/*",
+      "access_type": "shared",
+      "description": "Frontend agent can modify public assets"
+    }
+  ],
+  "agent-backend": [
+    {
+      "file_pattern": "src/backend/**/*",
+      "access_type": "exclusive",
+      "description": "Backend agent exclusively manages backend code"
+    },
+    {
+      "file_pattern": "src/api/**/*",
+      "access_type": "shared",
+      "description": "Backend agent shares API endpoints"
+    },
+    {
+      "file_pattern": "src/database/models.go",
+      "access_type": "readonly",
+      "description": "Backend agent can read database models"
+    }
+  ],
+  "agent-database": [
+    {
+      "file_pattern": "src/database/**/*",
+      "access_type": "exclusive",
+      "description": "Database agent exclusively manages database layer"
+    },
+    {
+      "file_pattern": "migrations/**/*",
+      "access_type": "exclusive",
+      "description": "Database agent manages migration files"
+    },
+    {
+      "file_pattern": "src/backend/models.go",
+      "access_type": "readonly",
+      "description": "Database agent can read model definitions"
+    }
+  ],
+  "agent-devops": [
+    {
+      "file_pattern": ".github/**/*",
+      "access_type": "exclusive",
+      "description": "DevOps agent manages GitHub Actions"
+    },
+    {
+      "file_pattern": "docker/**/*",
+      "access_type": "exclusive",
+      "description": "DevOps agent manages Docker files"
+    },
+    {
+      "file_pattern": "k8s/**/*",
+      "access_type": "exclusive",
+      "description": "DevOps agent manages Kubernetes manifests"
+    },
+    {
+      "file_pattern": "Makefile",
+      "access_type": "shared",
+      "description": "DevOps agent shares Makefile"
+    }
+  ],
+  "agent-docs": [
+    {
+      "file_pattern": "docs/**/*",
+      "access_type": "exclusive",
+      "description": "Documentation agent manages all documentation"
+    },
+    {
+      "file_pattern": "README.md",
+      "access_type": "exclusive",
+      "description": "Documentation agent manages README"
+    },
+    {
+      "file_pattern": "**/*.md",
+      "access_type": "readonly",
+      "description": "Documentation agent can read all markdown files"
+    }
+  ]
+}

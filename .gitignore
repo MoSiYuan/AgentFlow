@@ -1,5 +1,5 @@
-# Binaries
-bin/
+# Binaries (in golang/ directory)
+golang/bin/
 *.exe
 *.exe~
 *.dll

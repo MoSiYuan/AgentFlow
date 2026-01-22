@@ -4,19 +4,19 @@
 
 ## 📚 版本说明
 
-AgentFlow 现在提供两个版本：
+AgentFlow 提供两个版本，功能完全兼容，API 100% 相同：
 
 ### 🐧 Go 版本（云端部署）
-- **适用场景**: Kubernetes pod、云端服务器
-- **特点**: 高性能、生产级、功能完整
-- **位置**: [根目录](../) - 预编译二进制
-- **文档**: [README.md](../README.md) | [INSTALL.md](../INSTALL.md)
+- **适用场景**: Kubernetes pod、云端服务器、生产环境
+- **位置**: [golang/](../golang/)
+- **文档**: [golang/README.md](../golang/README.md)
+- **性能**: 10,000+ req/s，~20MB 内存
 
 ### 🐍 Python 版本（本地部署）
 - **适用场景**: 本地开发、个人使用、快速测试
-- **特点**: 安装简单、即插即用、功能完整
-- **位置**: [python/](./) 目录（本文件）
-- **功能**: 与 Go 版本完全兼容
+- **位置**: [python/](./)（本文件）
+- **文档**: [docs/installation.md](../docs/installation.md#python-版本)
+- **性能**: 1,000+ req/s，~50MB 内存
 
 ## 🚀 快速开始（2 步）
 

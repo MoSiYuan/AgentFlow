@@ -6,21 +6,60 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jiangxiaolong/agentflow-go/internal/config"
 	"github.com/jiangxiaolong/agentflow-go/internal/worker"
 )
 
 func main() {
 	// Command line flags
-	masterURL := flag.String("master", "http://localhost:8848", "Master URL")
-	dbPath := flag.String("db", ".claude/cpds-manager/agentflow.db", "Database path")
-	groupName := flag.String("group", "default", "Worker group name")
+	configFile := flag.String("config", "", "Configuration file path")
+	masterURL := flag.String("master", "", "Master URL (overrides config)")
+	dbPath := flag.String("db", "", "Database path (overrides config)")
+	groupName := flag.String("group", "", "Worker group name (overrides config)")
+	workerID := flag.String("worker-id", "", "Worker ID (overrides config)")
 	flag.Parse()
+
+	// Load configuration
+	var cfg *config.Config
+	var err error
+
+	if *configFile != "" {
+		cfg, err = config.Load(*configFile)
+	} else {
+		cfg = config.DefaultConfig()
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load configuration: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Override with command line flags
+	if *masterURL != "" {
+		cfg.Worker.MasterURL = *masterURL
+	}
+	if *dbPath != "" {
+		cfg.Worker.DBPath = *dbPath
+	}
+	if *groupName != "" {
+		cfg.Worker.GroupName = *groupName
+	}
+	if *workerID != "" {
+		cfg.Worker.ID = *workerID
+	}
+
+	// Validate configuration
+	if err := cfg.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid configuration: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Create worker
 	w, err := worker.New(&worker.Config{
-		MasterURL: *masterURL,
-		DBPath:    *dbPath,
-		GroupName: *groupName,
+		ID:        cfg.Worker.ID,
+		MasterURL: cfg.Worker.MasterURL,
+		DBPath:    cfg.Worker.DBPath,
+		GroupName: cfg.Worker.GroupName,
 	})
 
 	if err != nil {

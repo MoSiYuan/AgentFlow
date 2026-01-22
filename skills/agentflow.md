@@ -12,19 +12,26 @@
 
 ```bash
 # Terminal 1: 启动 Master
-cd /Users/jiangxiaolong/work/project/AgentFlow
-./bin/master --mode standalone --port 8848
+cd /Users/jiangxiaolong/work/project/AgentFlow/golang
+./bin/master --port 8848
 
 # Terminal 2: 启动 Worker
-./bin/worker --mode standalone --master http://127.0.0.1:8848 --name w1 --auto
+./bin/worker --master http://127.0.0.1:8848 --group default
 
 # Terminal 3: 创建任务
-curl -X POST http://127.0.0.1:8848/api/tasks/create \
+curl -X POST http://127.0.0.1:8848/api/v1/tasks \
   -H "Content-Type: application/json" \
-  -d '{"task_id": "T1", "title": "Test", "description": "prompt", "priority": "high"}'
+  -d '{"title": "Test", "description": "shell:echo Hello AgentFlow"}'
 ```
 
-**详细安装步骤**: 请参考 [安装指南](INSTALL.md#安装方式)
+**📦 首次使用需要编译**:
+```bash
+cd golang
+go build -o bin/master cmd/master/main.go
+go build -o bin/worker cmd/worker/main.go
+```
+
+详见: [golang/docs/BUILD_GUIDE.md](golang/docs/BUILD_GUIDE.md)
 
 ## 🎯 核心 API（最常用）
 
@@ -401,7 +408,82 @@ kill $MASTER_PID
 
 **相关文档**:
 - 📖 [README.md](README.md) - 完整项目文档
-- 📦 [INSTALL.md](INSTALL.md) - 安装指南
-- 🏗️ [ARCHITECTURE.md](docs/ARCHITECTURE.md) - 架构设计
+- 📦 [golang/docs/BUILD_GUIDE.md](golang/docs/BUILD_GUIDE.md) - 编译指南
+- 🔄 [golang/docs/MIGRATION_TASKS.md](golang/docs/MIGRATION_TASKS.md) - 功能迁移任务
+- 🏗️ [golang/docs/FEATURE_COMPARISON.md](golang/docs/FEATURE_COMPARISON.md) - 功能对比
 
 **已验证特性**: ✅ 多进程并发执行 | ✅ Claude CLI 集成 | ✅ 任务自动分配 | ✅ 真实 AI 执行
+
+---
+
+## 🔄 功能迁移任务
+
+golang 版本是简化版本，正在从 old 版本迁移高级功能。
+
+### 📋 当前迁移任务
+
+**高优先级**:
+1. **HTTP 执行器** - 独立的 Claude 服务器（2-3小时）
+2. **OneShot 模式** - 执行一个任务后退出（1-2小时）
+3. **配置系统** - 统一配置管理（2-3小时）
+
+**中优先级**:
+4. **Git 集成** - 版本控制集成（4-6小时）
+5. **文件边界系统** - 多 Worker 协作编辑（4-5小时）
+6. **文件锁系统** - 防止编辑冲突（3-4小时）
+
+**详细任务列表**: [golang/docs/MIGRATION_TASKS.md](golang/docs/MIGRATION_TASKS.md)
+
+### 🚀 快速创建迁移任务
+
+```bash
+# 为 HTTP 执行器迁移创建任务
+curl -X POST http://127.0.0.1:8848/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Migrate HTTP Executor",
+    "description": "migration:task-1 Implement HTTP executor from old version",
+    "group_name": "migration"
+  }'
+
+# 创建所有高优先级迁移任务
+curl -X POST http://127.0.0.1:8848/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Oneshot Mode", "description": "migration:task-2", "group_name": "migration"}'
+
+curl -X POST http://127.0.0.1:8848/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Config System", "description": "migration:task-3", "group_name": "migration"}'
+```
+
+### 📊 迁移进度
+
+- [ ] 任务 1: HTTP 执行器
+- [ ] 任务 2: OneShot 模式
+- [ ] 任务 3: 配置系统
+- [ ] 任务 4: Git 集成
+- [ ] 任务 5: 文件边界
+- [ ] 任务 6: 文件锁
+
+查看完整列表: [golang/docs/MIGRATION_TASKS.md](golang/docs/MIGRATION_TASKS.md)
+
+### 🔧 开始迁移
+
+1. **选择任务**:
+```bash
+/agentflow migrate list
+```
+
+2. **创建任务**: 见上面示例
+
+3. **Worker 会自动执行迁移任务**
+
+4. **查看进度**:
+```bash
+curl http://127.0.0.1:8848/api/v1/tasks?group=migration
+```
+
+---
+
+**当前版本**: v1.0.0 (简化版)
+**目标**: 完整功能版 (基于 old/)

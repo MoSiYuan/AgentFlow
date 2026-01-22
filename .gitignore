@@ -7,6 +7,8 @@ bin/
 *.dylib
 agentflow
 agentflow-*
+master
+worker
 
 # Test binaries
 *.test
@@ -16,18 +18,24 @@ agentflow-*
 *.db-shm
 *.db-wal
 ctest_pure.db
+agentflow.db
+dev.db
+iteration.db
 
 # Workspace
 cpds-workspace/
 agentflow-workspace/
 workspace/
+/tmp/
 
 # Test results
 ctest_stories/
 test_results/
+ctest_stories/
 
 # Go
 *.mod.sum
+go.sum
 
 # IDE
 .vscode/
@@ -35,15 +43,47 @@ test_results/
 *.swp
 *.swo
 *~
+*.sublime-*
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # Logs
 *.log
-/tmp/
+logs/
 
 # Temporary files
 *.tmp
 *.bak
+*.old
+*.cache
+
+# Build artifacts
+dist/
+build/
+out/
+
+# Coverage
+*.out
+coverage.html
+coverage.out
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Claude Code
+.claude/debug/
+.claude/file-history/
+.claude/session-env/
+.claude/shell-snapshots/
+.claude/statsig/
+.claude/telemetry/
+.claude/todos/

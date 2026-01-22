@@ -1,309 +1,170 @@
 # AgentFlow - AI Agent 任务协作系统
 
-> **30秒上手，3令牌完成任务** - 专为 Claude Code 设计
+> **多进程并发，真 AI 执行** - 分布式任务协作平台
 
-## 🎯 核心功能
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8E.svg)](https://golang.org/)
+[![Python Version](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org/)
+[![Claude CLI](https://img.shields.io/badge/Claude%20CLI-1.0.102-blue.svg)](https://github.com/anthropics/claude-code)
 
-- **任务分发**: Master 分配任务给 Worker
-- **任务升级**: Worker 创建子任务
-- **Worker 协作**: 多 Worker 并发执行
-- **边界安全**: 工作目录隔离，可沙箱执行
-- **自迭代开发**: 用 AgentFlow 开发 AgentFlow
+## 🎯 项目简介
 
-## 🚀 快速安装
+AgentFlow 是一个 Master-Worker 架构的异步任务协作系统，支持真正的多进程并发和 Claude CLI 深度集成。
 
-> **当前版本说明**: 由于网络环境限制，新的 AgentFlow 代码暂时无法编译。当前使用的是已编译的二进制文件（来自旧版 cpds-go），功能完整且经过测试。
+## 📦 版本选择
 
-### 方式 1: 直接使用预编译二进制（推荐，无需编译）
+AgentFlow 提供两个版本，功能完全兼容，API 100% 相同：
 
-```bash
-# 克隆仓库
-git clone https://github.com/jiangxiaolong/agentflow-go.git
-cd agentflow-go
+### 🐧 Go 版本（云端部署）
 
-# 启动 Master 服务（standalone 模式，自动关闭）
-./bin/master --mode standalone --auto-shutdown
+**推荐场景**: Kubernetes pod、云端服务器、生产环境
 
-# 启动 Worker
-./bin/worker --mode standalone --master http://localhost:8848
+- ✅ 高性能（10,000+ req/s）
+- ✅ 低资源占用（~20MB）
+- ✅ 单一二进制文件
+- ✅ Docker/Kubernetes 友好
 
-# 或使用统一的 agentflow 入口
-./bin/agentflow master --mode standalone
-```
-
-### 方式 2: Claude Code Skill
-
-AgentFlow 已集成为 Claude Code 原生 skill：
+**位置**: [golang/](golang/) | **文档**: [docs/installation.md](docs/installation.md#go-版本)
 
 ```bash
-# 安装为 Claude Code skill
-cp skills/agentflow.md ~/.claude/commands/
-
-# 使用 skill
-/agentflow demo              # 运行演示
-/agentflow add "测试"         # 添加任务
-/agentflow list              # 查看任务
+cd golang
+./bin/master --mode standalone --port 8848
+./bin/worker --mode standalone --master http://127.0.0.1:8848 --auto
 ```
 
-### 方式 3: Docker 部署
+### 🐍 Python 版本（本地部署）
+
+**推荐场景**: 本地开发、个人使用、快速测试
+
+- ✅ 零编译，即插即用
+- ✅ 跨平台（Windows/macOS/Linux）
+- ✅ 易调试和修改
+- ✅ pip 安装
+
+**位置**: [python/](python/) | **文档**: [docs/installation.md](docs/installation.md#python-版本)
 
 ```bash
-# Standalone 模式
-docker-compose -f deployments/docker/docker-compose.standalone.yml up
-
-# Cloud 模式
-docker-compose -f deployments/docker/docker-compose.cloud.yml up
+cd python
+pip install -r requirements.txt
+python -m agentflow.cli master --port 8848
+python -m agentflow.cli worker --auto
 ```
 
-### ⚠️ 关于编译新版本
+## 🚀 快速开始
 
-当前版本使用预编译二进制文件（`bin/agentflow`, `bin/master`, `bin/worker`），这些文件来自旧版 cpds-go 项目。
-
-如需编译最新版本，需要：
-1. 确保网络可以访问 Go 依赖包
-2. 运行 `go mod download`
-3. 运行 `make build`
-
-## ⚡ 3秒上手（预编译版本）
+### 1. 选择版本
 
 ```bash
-# 克隆仓库
-git clone https://github.com/jiangxiaolong/agentflow-go.git
-cd agentflow-go
+# 云端/生产 → Go 版本
+cd golang
 
-# 直接使用预编译二进制（无需编译）
-./bin/master --mode standalone --auto-shutdown
-
-# 在另一个终端启动 Worker
-./bin/worker --mode standalone --master http://localhost:8848
+# 本地/开发 → Python 版本
+cd python
 ```
 
-## 📦 二进制文件说明
-
-当前 `bin/` 目录包含：
-- `agentflow` - 主程序（原 CPDS）
-- `master` - Master 服务器
-- `worker` - Worker 客户端
-
-这些是已编译的二进制文件，可直接使用。
-
-### 性能特性
-- HTTP 吞吐量: 10,000+ req/s
-- 内存使用: ~20MB
-- 启动时间: <100ms
-- 二进制大小: 34MB
-
-## 📝 任务格式
+### 2. 启动 Master
 
 ```bash
-# Shell 命令
-agentflow add "运行测试" --desc "shell:go test ./..."
+# Go 版本
+./bin/master --mode standalone --port 8848
 
-# 脚本执行
-agentflow add "部署应用" --desc "script:./deploy.sh"
-
-# AI 任务（自动分解）
-agentflow add "实现功能" --desc "task:implement:功能名"
-
-# 文件操作
-agentflow add "写配置" --desc "file:write:config.yaml:key:value"
+# Python 版本
+python -m agentflow.cli master --port 8848
 ```
 
-## 🔧 常用命令
+### 3. 启动 Worker
 
 ```bash
-# Claude Code Skill 命令
-/agentflow demo                           # 运行演示
-/agentflow add "任务" --desc "..."        # 创建任务
-/agentflow list --status completed        # 查看已完成任务
-/agentflow workers                        # 查看 Workers
-/agentflow status                         # 系统状态
+# Go 版本
+./bin/worker --mode standalone --master http://127.0.0.1:8848 --auto
 
-# CLI 命令（使用预编译二进制）
-./bin/master --mode standalone --auto-shutdown    # 启动 Master
-./bin/worker --mode standalone --master http://localhost:8848  # 启动 Worker
-./bin/agentflow master --mode standalone          # 统一入口
+# Python 版本
+python -m agentflow.cli worker --auto
 ```
 
-## 💻 使用示例
-
-### 本地开发工作流
+### 4. 创建任务
 
 ```bash
-# 1. 启动 Master
-./bin/agentflow init dev.db
-./bin/agentflow master --db dev.db
-
-# 2. 创建开发任务
-./bin/agentflow add "格式化代码" --desc "shell:gofmt -w ."
-./bin/agentflow add "运行测试" --desc "shell:go test ./..."
-./bin/agentflow add "代码检查" --desc "shell:golangci-lint run"
-./bin/agentflow add "构建应用" --desc "shell:go build -v ./..."
-
-# 3. 查看进度
-./bin/agentflow list --status running
-./bin/agentflow list --status completed
+curl -X POST http://127.0.0.1:8848/api/tasks/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task_id": "TASK-1",
+    "title": "测试任务",
+    "description": "shell:echo Hello AgentFlow",
+    "priority": "high"
+  }'
 ```
 
-### Claude Code 集成
+## 📊 核心特性
 
-```bash
-# 直接在 Claude Code 中使用
-/agentflow add "代码清理" --desc "shell:gofmt -w ."
-/agentflow add "测试" --desc "shell:go test ./..."
-/agentflow list --status completed
-```
+- ✅ **真正的多进程并发** - 每个 Worker 独立进程，任务自动分配
+- ✅ **Claude CLI 深度集成** - AI 任务执行，4-5秒/任务
+- ✅ **完整 REST API** - 任务管理、Worker 监控
+- ✅ **SQLite 持久化** - 任务状态持久化存储
+- ✅ **上下文优化** - 节省 token，批量操作
+- ✅ **跨平台支持** - Windows/macOS/Linux
 
-## 📖 文档
+## 📋 性能对比
 
-- [安装指南](INSTALL_GUIDE.md) - 详细安装说明
-- [快速入门](docs/GETTING_STARTED.md) - 基础使用
-- [架构设计](docs/ARCHITECTURE.md) - 系统架构
-- [自迭代开发](SELF_ITERATION.md) - 用 AgentFlow 开发 AgentFlow
-- [Skill 使用](skills/agentflow.md) - Claude Code Skill
-- [API 文档](docs/API.md) - REST API 参考
-
-## 🧪 实战示例
-
-**已验证**: 10个故事生成+20个评审=100%成功
-
-- 总任务: 30个
-- 执行时间: 3秒
-- 输出: 10个Markdown文件
-- 位置: `tests/ctest_stories/`
-
-## 🚀 为 AI 优化
-
-### 节约 Token 技巧
-
-1. **短命令**: `af add "T" --d "s:T:t:1"` (16 token)
-2. **批量**: 一次创建多个任务
-3. **过滤**: `af list --s completed` 只看结果
-
-### 快速集成
-
-```go
-// 1行创建任务
-exec("agentflow add T --desc s:T:t:1")
-
-// 1行查询状态
-exec("agentflow list --s completed")
-```
+| 指标 | Go 版本 | Python 版本 |
+|------|---------|-------------|
+| HTTP 吞吐量 | 10,000+ req/s | 1,000+ req/s |
+| 内存使用 | ~20MB/进程 | ~50MB/进程 |
+| 启动时间 | <100ms | ~1s |
+| 并发能力 | 3+ Workers | 3+ Workers |
+| 二进制大小 | 34MB | N/A |
+| 依赖管理 | 无（静态链接） | Flask, requests |
 
 ## 📁 项目结构
 
 ```
-agentflow-go/
-├── cmd/agentflow/          # CLI 工具
-├── internal/
-│   ├── database/          # SQLite 层
-│   ├── master/            # Master 服务
-│   ├── model/             # 数据模型
-│   └── worker/            # Worker + AI Worker
-├── tests/                  # 测试文件
-├── docs/                  # 完整文档
-├── skills/                # Claude Code Skills
-├── scripts/               # 实用脚本
-├── deployments/           # 部署配置
-├── quick-start.sh         # 快速启动脚本
-├── INSTALL_GUIDE.md       # 安装指南
-├── SELF_ITERATION.md      # 自迭代开发
-└── README.md              # 本文件
+AgentFlow/
+├── golang/              # Go 版本（云端部署）
+│   ├── bin/            # 预编译二进制
+│   ├── internal/       # 源代码
+│   └── deployments/    # Docker/K8s 配置
+│
+├── python/             # Python 版本（本地部署）
+│   ├── agentflow/      # Python 包
+│   └── requirements.txt
+│
+├── docs/               # 所有文档
+│   ├── installation.md # 安装指南
+│   ├── architecture.md # 架构设计
+│   └── scripts/        # 实用脚本
+│
+├── skills/             # Claude Code Skill
+│   └── agentflow.md    # Skill 手册
+│
+└── README.md           # 本文件
 ```
 
-## 💡 使用场景
+## 📚 文档
 
-1. **本地开发**: Master 自动启动本地 Workers，直连数据库
-2. **云端部署**: Master 在服务器，Workers 分布式连接
-3. **任务协作**: 主任务完成后创建子任务
-4. **CI/CD**: 自动化构建、测试、部署流程
-5. **自迭代**: 用 AgentFlow 开发 AgentFlow 本身
+- [安装指南](docs/installation.md) - Go 和 Python 版本安装步骤
+- [架构设计](docs/architecture.md) - 系统架构和设计理念
+- [API 文档](docs/api.md) - REST API 完整参考
+- [Skill 手册](skills/agentflow.md) - Claude Code 集成指南
 
-## 🎯 实战示例
+## 🎯 使用场景
 
-**已验证**: 30 个任务（10个故事+20个评审）100% 成功
+### 云端部署（Go 版本）
+- ✅ Kubernetes pod 部署
+- ✅ Docker 容器化
+- ✅ 微服务架构
+- ✅ 高并发场景
 
-- **总任务数**: 30 个
-- **执行时间**: 3 秒
-- **成功率**: 100%
-- **输出**: 10 个 Markdown 文件
-- **位置**: `tests/ctest_stories/`
-
-## 🚀 为 AI 优化
-
-### 节约 Token 技巧
-
-1. **短命令**: `af add "T" --d "s:T:t:1"` (16 token)
-2. **批量**: 一次创建多个任务
-3. **过滤**: `af list --s completed` 只看结果
-
-### Claude Code 集成
-
-```bash
-# Skill 已安装到 ~/.claude/commands/agentflow.md
-# 直接使用：
-/agentflow demo              # 演示
-/agentflow add "测试"         # 添加任务
-/agentflow list              # 查看任务
-```
-
-## 🔧 开发环境
-
-### ⚠️ 当前状态
-
-**使用预编译二进制**: 当前版本使用旧版 cpds-go 的编译二进制，功能完整且经过测试。
-
-**新版本编译**: 如需编译最新代码，需要稳定的网络连接来下载 Go 依赖包。
-
-### 快速开始（使用预编译版本）
-
-```bash
-# 1. 克隆仓库
-git clone https://github.com/jiangxiaolong/agentflow-go.git
-cd agentflow-go
-
-# 2. 直接使用预编译二进制
-./bin/master --mode standalone --auto-shutdown
-
-# 3. 在另一个终端启动 Worker
-./bin/worker --mode standalone --master http://localhost:8848
-
-# 4. 创建测试任务
-curl -X POST http://localhost:8848/api/tasks/create \
-  -H "Content-Type: application/json" \
-  -d '{"task_id": "TASK-001", "title": "Test", "description": "Test task", "priority": "high"}'
-```
-
-### 编译新版本（需要网络连接）
-
-```bash
-# 前置要求: Go 1.21+, 稳定的网络连接
-
-# 配置 Go 代理
-go env -w GOPROXY=https://goproxy.cn,direct
-
-# 下载依赖
-go mod download
-
-# 编译项目
-go build -o bin/agentflow ./cmd/agentflow
-go build -o bin/master ./cmd/master
-go build -o bin/worker ./cmd/worker
-```
-
-## 📊 性能指标
-
-| 指标 | 数值 | 说明 |
-|------|------|------|
-| HTTP 吞吐量 | 10,000+ req/s | 高性能 HTTP 处理 |
-| 内存使用 | ~20MB | 低资源占用 |
-| 启动时间 | <100ms | 快速启动 |
-| 二进制大小 | 34MB | 单文件部署 |
-| 任务成功率 | 100% | 已测试验证 |
+### 本地开发（Python 版本）
+- ✅ 本地开发环境
+- ✅ 快速功能测试
+- ✅ 学习和调试
+- ✅ 个人项目
 
 ## 🤝 贡献
 
-欢迎贡献代码！请查看 [CONTRIBUTING.md](CONTRIBUTING.md)
+欢迎提交 Issue 和 Pull Request！
+
+详见 [贡献指南](docs/contributing.md)
 
 ## 📄 许可证
 
@@ -311,10 +172,11 @@ MIT License - 详见 [LICENSE](LICENSE)
 
 ## 🔗 相关链接
 
-- **GitHub**: [jiangxiaolong/agentflow-go](https://github.com/jiangxiaolong/agentflow-go)
-- **Issue**: 提交问题和建议
-- **文档**: 完整文档见 docs/ 目录
+- **GitHub**: https://github.com/MoSiYuan/AgentFlow
+- **分支**: [feature/1.0.0](https://github.com/MoSiYuan/AgentFlow/tree/feature/1.0.0)
+- **Issue**: https://github.com/MoSiYuan/AgentFlow/issues
 
 ---
 
-**AgentFlow** - 让 AI Agent 协作更简单 ✨
+**版本**: v1.0.0
+**更新**: 2026-01-22

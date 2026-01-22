@@ -4,7 +4,37 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8E.svg)](https://golang.org/)
+[![Python Version](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org/)
 [![Claude CLI](https://img.shields.io/badge/Claude%20CLI-1.0.102-blue.svg)](https://github.com/anthropics/claude-code)
+
+## 📦 版本选择
+
+AgentFlow 提供两个版本，功能完全兼容：
+
+### 🐧 Go 版本（云端部署）
+- **推荐场景**: Kubernetes pod、云端服务器、生产环境
+- **特点**: 高性能、单一二进制、低资源占用
+- **性能**: 10,000+ req/s，~20MB 内存
+- **安装**: [安装指南](INSTALL.md#方式-2-预编译二进制无需编译)
+
+```bash
+./bin/master --mode standalone --port 8848
+./bin/worker --mode standalone --master http://127.0.0.1:8848 --auto
+```
+
+### 🐍 Python 版本（本地部署）
+- **推荐场景**: 本地开发、个人使用、快速测试
+- **特点**: 零编译、跨平台、易调试
+- **性能**: 1,000+ req/s，~50MB 内存
+- **安装**: `pip install -r requirements.txt`
+
+```bash
+cd python
+python -m agentflow.cli master --port 8848
+python -m agentflow.cli worker --auto
+```
+
+**详细文档**: [python/README.md](python/README.md) | **两者 API 完全兼容**
 
 ## 🎯 核心特性
 

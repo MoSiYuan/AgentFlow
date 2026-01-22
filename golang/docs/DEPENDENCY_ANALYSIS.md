@@ -11,11 +11,30 @@
 | `github.com/mattn/go-sqlite3` | v1.14.18 | `internal/database/database.go` | SQLite 驱动 |
 | `github.com/sirupsen/logrus` | v1.9.3 | 多个文件 | 日志库 |
 
-### ❌ 可能未使用的依赖
+### ❌ 已删除的依赖
 
 | 依赖包 | 版本 | 说明 |
 |--------|------|------|
-| `github.com/stretchr/testify` | v1.8.4 | 测试框架，但项目中无 `*_test.go` 文件 |
+| `github.com/stretchr/testify` | v1.8.4 | ~~测试框架，已删除（无测试文件）~~ |
+
+### ⚠️ golang.org/x 依赖（必需但国内访问慢）
+
+| 依赖包 | 版本 | 说明 | 解决方案 |
+|--------|------|------|----------|
+| `golang.org/x/crypto` | v0.16.0 | 间接依赖（加密） | 使用代理 |
+| `golang.org/x/net` | v0.19.0 | Gin 必需 | 使用代理 |
+| `golang.org/x/sys` | v0.15.0 | Logrus 必需 | 使用代理 |
+| `golang.org/x/text` | v0.14.0 | 多个包必需 | 使用代理 |
+
+**重要**: 这些依赖**无法删除**，因为它们被 Gin 和 Logrus 必需。
+
+**解决方案**: 使用国内代理加速下载：
+```bash
+go env -w GOPROXY=https://goproxy.cn,direct
+go env -w GOSUMDB=off
+```
+
+详见：[GOLANG_X_DEPENDENCIES.md](GOLANG_X_DEPENDENCIES.md)
 
 ### 📦 间接依赖（自动管理）
 
@@ -33,11 +52,9 @@
 - `github.com/leodido/go-urn` - gin 依赖
 - `github.com/mattn/go-isatty` - logrus 依赖
 - `github.com/pelletier/go-toml/v2` - gin 依赖
-- `golang.org/x/crypto` - 多个包依赖
 - `golang.org/x/net` - gin 依赖
 - `golang.org/x/sys` - 多个包依赖
 - `golang.org/x/text` - 多个包依赖
-- `google.golang.org/protobuf` - gin 依赖
 - `gopkg.in/yaml.v3` - gin 依赖
 
 ## 🔧 清理建议

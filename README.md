@@ -67,14 +67,16 @@ make build
 ## ⚡ 3秒上手
 
 ```bash
-# 运行测试演示（无需依赖，纯标准库）
-cd tests && go run ctest_pure.go
+# 克隆仓库
+git clone https://github.com/jiangxiaolong/agentflow-go.git
+cd agentflow-go
 
-# 或使用快速启动脚本
-./quick-start.sh demo
+# 编译项目（需要网络连接下载依赖）
+make build
 
-# 查看结果
-cat tests/ctest_stories/story_1.md
+# 初始化并启动
+./bin/agentflow init agentflow.db
+./bin/agentflow master --db agentflow.db
 ```
 
 ## 📝 任务格式
@@ -186,8 +188,7 @@ agentflow-go/
 │   ├── master/            # Master 服务
 │   ├── model/             # 数据模型
 │   └── worker/            # Worker + AI Worker
-├── tests/
-│   └── ctest_pure.go      # 演示代码（纯标准库）
+├── tests/                  # 测试文件
 ├── docs/                  # 完整文档
 ├── skills/                # Claude Code Skills
 ├── scripts/               # 实用脚本
@@ -248,13 +249,12 @@ agentflow-go/
 git clone https://github.com/jiangxiaolong/agentflow-go.git
 cd agentflow-go
 
-# 2. 运行演示（无需编译）
-./quick-start.sh demo
-
-# 3. 或编译完整版本
+# 2. 编译项目
 make build
+
+# 3. 初始化并启动
 ./bin/agentflow init agentflow.db
-./bin/agentflow master
+./bin/agentflow master --db agentflow.db
 ```
 
 ## 📊 性能指标

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make:*)",
+      "Bash(chmod:*)",
+      "Bash(./quick-start.sh:*)",
+      "Bash(bash:*)",
+      "Bash(find:*)",
+      "Bash(gofmt:*)",
+      "Bash(test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

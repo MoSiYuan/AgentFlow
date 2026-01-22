@@ -87,3 +87,11 @@ coverage.out
 .claude/statsig/
 .claude/telemetry/
 .claude/todos/
+
+# AgentFlow database
+.claude/cpds-manager/*.db
+.claude/cpds-manager/*.db-shm
+.claude/cpds-manager/*.db-wal
+
+# Old code database (keep structure but ignore db files)
+old/.claude/

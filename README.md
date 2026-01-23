@@ -1,6 +1,6 @@
 # AgentFlow - AI Agent 任务协作系统
 
-> **三语言架构，统一 API** - 本地开发、Web 实时协作与云端部署的完美结合
+> **双语言架构，统一 API** - 本地开发与云端部署的完美结合
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js Version](https://img.shields.io/badge/Node.js-18%2B-brightgreen.svg)](https://nodejs.org/)
@@ -11,19 +11,125 @@
 
 ## 🎯 项目简介
 
-AgentFlow 是一个 **Master-Worker 架构** 的异步 AI 任务协作系统，提供 **三个完全兼容的版本**，满足不同场景需求：
+AgentFlow 是一个 **Master-Worker 架构** 的异步 AI 任务协作系统，提供 **两个完全兼容的版本**，满足不同场景需求：
 
-- **💚 Node.js 版本** - 本地执行与 Web 实时协作（**推荐**，默认版本）
-- **🐧 Go 版本** - 云端部署与大规模并行
-- **🐍 Python 版本** - 本地开发（可选，特殊场景）
+- **💚 Node.js 版本** - 本地执行 + 云端 Workers（**推荐**，默认版本）
+- **🐧 Go 版本** - 云端 Master（高性能 API 调度）
 
-三个版本 **API 100% 兼容**，可以无缝混合使用。
+两个版本 **API 100% 兼容**，可以无缝混合使用。
 
 ---
 
 ## 📦 版本选择与定位
 
-### 💚 Node.js 版本 - 本地执行与 Web 实时协作（**推荐**）
+### 💚 Node.js 版本 - 本地执行 + 云端 Workers（**推荐**）
+
+**核心定位**: 本地执行、Web 实时协作、Serverless 部署
+
+**最佳使用场景**:
+- ✅ **本地开发（推荐）** - 与 Claude CLI 共享 Node.js 运行时
+- ✅ Web 应用后端 - 实时任务进度推送
+- ✅ 前后端统一 - TypeScript 全栈开发
+- ✅ Serverless 部署 - AWS Lambda 零成本启动
+- ✅ 实时协作系统 - WebSocket 原生支持
+- ✅ **云端 Workers** - 直接调用 Claude SDK（零进程开销）
+
+**核心优势**:
+```typescript
+// 零额外依赖 - 用户已有 Node.js（Claude CLI 依赖）
+npm install -g agentflow
+// → 完成！无需安装 Python
+
+// TypeScript 类型安全
+const task: Task = await master.createTask({
+  title: '实现用户认证',
+  description: '...'
+});
+
+// 实时进度推送
+ws.on('task.progress', (data) => {
+  console.log(`进度: ${data.progress}%`);
+});
+
+// Worker 直接调用 Claude SDK（同进程，零开销）
+import Anthropic from '@anthropic-ai/sdk';
+const result = await anthropic.messages.create({...});
+```
+
+**技术特点**:
+- 🔹 **零额外依赖** - 复用 Claude CLI 的 Node.js
+- 🔹 **TypeScript 原生** - 编译时类型检查，IDE 自动补全
+- 🔹 **更快启动** - 300ms vs Python 1s（提升 60%）
+- 🔹 **WebSocket 原生** - 实时任务进度推送
+- 🔹 **async/await** - 现代异步编程
+- 🔹 **Serverless 友好** - AWS Lambda 完美支持
+
+**快速开始**:
+```bash
+# 安装（已有 Node.js）
+npm install -g agentflow
+
+# 启动 Master
+agentflow-master start
+
+# 启动 Worker
+agentflow-worker --mode auto
+
+# 或使用 npx（无需安装）
+npx agentflow-master start
+```
+
+**文档位置**: [nodejs/README.md](nodejs/README.md) | [架构说明](docs/ARCHITECTURE_SIMPLIFICATION.md)
+
+---
+
+### 🐧 Go 版本 - 云端 Master（高性能 API 调度）
+
+**核心定位**: 云端部署、高性能 API、大规模任务调度
+
+**最佳使用场景**:
+- ✅ Docker/Kubernetes 容器化部署
+- ✅ 云端任务调度和状态管理
+- ✅ 大规模并发请求处理（10,000+ req/s）
+- ✅ 生产环境 24/7 运行
+- ✅ 微服务架构集成
+- ✅ CI/CD 流水线集成
+
+**核心优势**:
+```bash
+# 云端大规模部署示例
+kubectl apply -f golang/deployments/
+# → 自动启动 Go Master
+# → 调度 1000+ Node.js Workers
+# → 高性能 API 调度（10,000 req/s）
+# → 低内存占用（20MB）
+```
+
+**技术特点**:
+- 🔹 **高性能** - 10,000+ req/s HTTP 吞吐量
+- 🔹 **低资源** - 单进程 ~20MB 内存
+- 🔹 **单一二进制** - 无依赖，静态链接
+- 🔹 **容器友好** - Docker/K8s 原生支持
+- 🔹 **强类型** - 编译时类型检查
+- 🔹 **高并发** - 1000+ Workers 调度
+
+**快速开始**:
+```bash
+# 编译
+cd golang
+go build -o bin/master cmd/master/main.go
+
+# 启动 Master
+./bin/master --config config.yaml
+
+# Docker 部署
+docker build -t agentflow-master:latest .
+kubectl apply -f deployments/master.yaml
+```
+
+**注意**: Go 版本仅提供 Master，不包含 Worker。Worker 请使用 Node.js 版本。
+
+**文档位置**: [golang/README.md](golang/README.md)
 
 **核心定位**: 本地执行、Web 实时协作、Serverless 部署
 
@@ -79,66 +185,14 @@ npx agentflow-master start
 
 ---
 
-### 🐧 Go 版本 - 云端部署专家
+### 🐧 Go 版本 - 云端 Master（高性能 API 调度）
 
-**核心定位**: 容器化部署、云端 AI Agent、大规模并行开发
-
-**核心定位**: 本地部署、跨平台执行、GUI 自动化
-
-**最佳使用场景**:
-- ✅ 本地开发环境集成
-- ✅ 跨平台脚本执行（Windows/macOS/Linux）
-- ✅ GUI 自动化操作（文本编辑器、IDE）
-- ✅ 系统级命令调用
-- ✅ 快速原型开发与调试
-- ✅ 个人项目和轻量级任务
-
-**核心优势**:
-```python
-# 跨平台 GUI 操作示例
-from agentflow import Worker
-
-worker = Worker()
-worker.run_task("""
-使用 VSCode 打开文件 /path/to/file.py
-跳转到第 42 行
-选中整行代码
-复制到剪贴板
-""")
-```
-
-**技术特点**:
-- 🔹 **零编译** - 即插即用，pip 安装
-- 🔹 **跨平台原生** - 完美支持 Windows/macOS/Linux 特有功能
-- 🔹 **GUI 集成** - 可调用系统 GUI API（VSCode、TextEdit、等）
-- 🔹 **易调试** - Python 生态，pdb/ipdb 调试
-- 🔹 **灵活扩展** - 利用 Python 丰富的第三方库
-
-**快速开始**:
-```bash
-# 安装
-cd python
-pip install -r requirements.txt
-
-# 启动 Master
-python -m agentflow.cli master --port 8848
-
-# 启动 Worker
-python -m agentflow.cli worker --auto
-```
-
-**文档位置**: [python/README.md](python/README.md)
-
----
-
-### 🐧 Go 版本 - 云端部署专家
-
-**核心定位**: 容器化部署、云端 AI Agent、大规模并行开发
+**核心定位**: 容器化部署、云端任务调度、高性能 API
 
 **最佳使用场景**:
 - ✅ Docker/Kubernetes 容器化部署
-- ✅ 云端 AI Agent 集群
-- ✅ 大规模并行任务处理（1000+ 并发）
+- ✅ 云端任务调度和状态管理
+- ✅ 大规模并发请求处理（10,000+ req/s）
 - ✅ 生产环境 24/7 运行
 - ✅ 微服务架构集成
 - ✅ CI/CD 流水线集成
@@ -147,9 +201,10 @@ python -m agentflow.cli worker --auto
 ```bash
 # 云端大规模部署示例
 kubectl apply -f golang/deployments/
-# → 自动启动 100 个 Worker Pods
-# → 每个 Pod 独立执行 AI 任务
-# → 支持动态扩缩容
+# → Go Master 提供高性能 API
+# → 调度 1000+ Node.js Workers
+# → 直接调用 Claude SDK（零开销）
+# → 低内存、高性能、低成本
 ```
 
 **技术特点**:
@@ -157,24 +212,30 @@ kubectl apply -f golang/deployments/
 - 🔹 **低资源** - 单进程 ~20MB 内存
 - 🔹 **单一二进制** - 无依赖，静态链接
 - 🔹 **容器友好** - Docker/K8s 原生支持
-- 🔹 **三层执行器**:
-  1. HTTP Executor (Claude Server)
-  2. Claude CLI Executor
-  3. Shell 命令 (fallback)
+- 🔹 **强类型** - 编译时类型检查
+- 🔹 **高并发** - 1000+ Workers 调度
 
 **快速开始**:
 ```bash
-# 编译（或直接使用预编译二进制）
+# 编译
 cd golang
 go build -o bin/master cmd/master/main.go
-go build -o bin/worker cmd/worker/main.go
-go build -o bin/oneshot cmd/oneshot/main.go
 
 # 启动 Master
 ./bin/master --config config.yaml
 
-# 启动 Worker（持续模式）
-./bin/worker --config config.yaml
+# Docker 部署
+docker build -t agentflow-master:latest .
+kubectl apply -f deployments/master.yaml
+```
+
+**注意**: Go 版本仅提供 Master。Worker 请使用 Node.js 版本（直接调用 Claude SDK，零进程开销）。
+
+**文档位置**: [golang/README.md](golang/README.md)
+
+---
+
+## 🔄 两个版本的协作
 
 # 启动 Worker（单次执行）
 ./bin/oneshot --config config.yaml --timeout 5m
@@ -184,40 +245,8 @@ go build -o bin/oneshot cmd/oneshot/main.go
 
 ---
 
-### 🐍 Python 版本 - 可选（特殊场景）
 
-**核心定位**: 本地开发（已废弃，推荐使用 Node.js 版本）
-
-**适用场景**:
-- ⚠️ 需要特定 Python 库（pandas、numpy 等）
-- ⚠️ 需要使用 Python 生态工具
-
-**为什么推荐 Node.js 替代 Python**:
-1. ✅ **零额外依赖** - 用户已有 Node.js（Claude CLI），无需安装 Python
-2. ✅ **更快启动** - 300ms vs 1s
-3. ✅ **类型安全** - TypeScript 编译时检查
-4. ✅ **功能对等** - 系统命令、文件操作、Git 集成完全相同
-
-**详细对比**: [Node.js vs Python 分析报告](docs/nodejs-vs-python-local.md)
-
-**快速开始**:
-```bash
-# 安装（不推荐，建议使用 Node.js 版本）
-cd python
-pip install -r requirements.txt
-
-# 启动 Master
-python -m agentflow.cli master --port 8848
-
-# 启动 Worker
-python -m agentflow.cli worker --auto
-```
-
-**文档位置**: [python/README.md](python/README.md)
-
----
-
-## 🔄 三个版本的协作
+## 🔄 两个版本的协作
 
 ### 混合部署架构（推荐）
 
@@ -286,7 +315,6 @@ python -m agentflow.cli worker --auto
 
 ## 📊 性能对比
 
-| 指标 | **Node.js 版本** | Python 版本 | Go 版本 |
 |------|-----------------|-------------|---------|
 | **推荐场景** | **本地开发（默认）** | 特殊场景 | 云端部署 |
 | **部署方式** | **npm install** | pip install | Docker/K8s |
@@ -394,7 +422,7 @@ python -m agentflow.cli master --port 8848
 
 ## 📚 核心功能
 
-### 通用功能（三个版本都支持）
+### 通用功能（两个版本都支持）
 
 - ✅ **Master-Worker 架构** - 分布式任务调度
 - ✅ **RESTful API** - 完整的任务管理接口
@@ -414,82 +442,11 @@ python -m agentflow.cli master --port 8848
 - ✅ **async/await 原生** - 现代异步编程
 - ✅ **零额外依赖** - 复用 Claude CLI Node.js
 
-### Python 版本独有（已废弃，推荐使用 Node.js）
-
-- ✅ **GUI 自动化** - VSCode、TextEdit、等
-- ✅ **跨平台系统调用** - Windows/macOS/Linux 原生 API
-- ✅ **交互式执行** - 支持用户输入
-- ✅ **Python 生态集成** - 丰富的第三方库
-- ⚠️ **需要额外安装 Python**
-
-### Go 版本独有
-
-- ✅ **HTTP 执行器** - 通过 HTTP 调用 Claude Server
-- ✅ **OneShot 模式** - 执行单个任务后退出
-- ✅ **配置系统** - YAML 文件 + 环境变量
-- ✅ **容器化部署** - Docker/K8s 支持
-- ✅ **高并发优化** - 1000+ Workers
-- ✅ **高性能 API** - 10,000+ req/s 吞吐量
-- ✅ **低内存占用** - ~20MB/进程
-
-### Node.js Workers 独有（云端执行）
-
-- ✅ **零进程开销** - 直接调用 Claude SDK（同进程）
-- ✅ **更好错误处理** - try/catch vs 进程退出码
-- ✅ **单一运行时** - 只需 Node.js（无需 Go）
-- ✅ **WebSocket 原生** - 实时进度推送
-- ✅ **类型安全** - TypeScript 编译时检查
-- ✅ **简单部署** - npm install 即可
-
-### 为什么 Go Master + Node.js Workers？
-
-**关键洞察**：Claude CLI 本身是 Node.js 的！
-
-```
-Go Worker 方案：
-  Go Worker → 启动 Node.js 子进程 → 调用 claude 命令
-  ❌ 进程开销：175ms/task
-  ❌ 内存占用：125MB/worker
-  ❌ 复杂部署：Go + Node.js
-
-Node.js Worker 方案：
-  Node.js Worker → 直接调用 Claude SDK
-  ✅ 进程开销：4ms/task（省 97%）
-  ✅ 内存占用：105MB/worker（省 16%）
-  ✅ 简单部署：只需 Node.js
-```
-
-**性能对比**：
-- 任务执行：快 10%（2.0s vs 2.2s）
-- 进程开销：省 97%（4ms vs 175ms）
-- 内存占用：省 16%（105MB vs 125MB）
-
-**成本对比**（1000 Workers）：
-- Go Workers：$36,000/年
-- Node.js Workers：$30,000/年
-- **节省：$6,000/年（16.7%）**
-
-**详细分析**：[Go Master + Node.js Workers 架构](docs/go-master-nodejs-worker.md)
-
-### 多 Agent 协作（新增）
-
-- ✅ **Git 集成** - 文件边界控制和权限管理
-- ✅ **文件锁** - 防止多 Agent 同时修改同一文件
-- ✅ **分支隔离** - 每个 Agent 在独立分支工作
-- ✅ **冲突检测** - 自动检测文件锁定和合并冲突
-- ✅ **任务升级机制** - 三级冲突解决（自动重试 → 升级任务 → 人工）
-
-**详细文档**:
-- [Git 集成指南](docs/git-integration-guide.md)
-- [Agent 任务升级机制](docs/agent-upgrade-mechanism.md)
-
----
 
 ## 📁 项目结构
 
 ```
 AgentFlow/
-├── python/                 # Python 版本（本地开发）
 │   ├── agentflow/          # 核心包
 │   │   ├── __init__.py     # 模块入口
 │   │   ├── master.py       # Master 实现
@@ -497,7 +454,6 @@ AgentFlow/
 │   │   ├── database.py     # 数据库层
 │   │   └── cli.py          # 命令行工具
 │   ├── requirements.txt    # Python 依赖
-│   └── README.md           # Python 版本文档
 │
 ├── golang/                 # Go 版本（云端部署）
 │   ├── cmd/                # 命令行工具
@@ -530,19 +486,24 @@ AgentFlow/
 
 ## 📖 文档
 
-### Python 版本文档
-- [Python 版本 README](python/README.md) - 详细使用说明
-- [安装指南](docs/installation.md#python-版本)
-- [API 参考](docs/python-api.md)
+### Node.js 文档
+- [Node.js README](nodejs/README.md) - 详细使用说明
+- [API 参考](docs/api.md) - API 文档
 
-### Go 版本文档
-- [Go 版本 README](golang/README.md) - 详细使用说明
+### Go 文档
+- [Go README](golang/README.md) - 详细使用说明
 - [构建指南](golang/docs/BUILD_GUIDE.md)
 - [配置参考](golang/config.example.yaml)
 
-### 共享文档
-- [系统架构](docs/architecture.md) - 整体架构设计
-- [迁移指南](docs/migration.md) - 两个版本之间迁移
+### 架构文档
+- [架构简化说明](docs/ARCHITECTURE_SIMPLIFICATION.md) - **重要更新**
+- [统一架构设计](docs/unified-architecture.md) - 跨语言架构
+- [统一流程文档](docs/unified-workflows.md) - 核心流程
+- [Go Master + Node.js Workers](docs/go-master-nodejs-worker.md) - **推荐架构**
+- [部署脚本指南](docs/deployment-scripts.md) - 快速部署
+
+### Skills
+- [AgentFlow Skill 手册](skills/agentflow.md) - Claude Code 集成
 - [Skill 手册](skills/agentflow.md) - Claude Code 集成
 
 ---
@@ -552,7 +513,6 @@ AgentFlow/
 ### 场景 1: 本地代码重构（Python）
 
 ```python
-# 使用 Python 版本进行本地代码重构
 from agentflow import Master, Worker
 
 master = Master(port=8848)

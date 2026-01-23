@@ -306,3 +306,109 @@ export interface HealthResponse {
   uptime: number;
   mode: 'standalone' | 'cloud';
 }
+
+/**
+ * Task relationship types
+ */
+export type TaskRelationshipType =
+  | 'dependency'  // Successor depends on predecessor (predecessor must complete first)
+  | 'context'     // Successor uses predecessor's output as context
+  | 'upgrade'     // Successor is an upgraded version of predecessor
+  | 'parallel'    // Tasks can run in parallel
+  | 'sequential'; // Tasks must run in sequence
+
+/**
+ * Task relationship
+ */
+export interface TaskRelationship {
+  id: number;
+  predecessor_id: number;
+  successor_id: number;
+  relationship_type: TaskRelationshipType;
+  data_flow?: string;  // JSON string describing data flow
+  created_at: Date;
+}
+
+/**
+ * Task checkpoint (short-term memory)
+ */
+export interface TaskCheckpoint {
+  id: number;
+  task_id: number;
+  worker_id: string;
+  checkpoint_name: string;
+  checkpoint_data: string;    // JSON string
+  memory_snapshot?: string;   // JSON string of agent's short-term memory
+  state_snapshot?: string;    // JSON string of execution state
+  timestamp: Date;
+}
+
+/**
+ * Task version (upgrade mechanism)
+ */
+export interface TaskVersion {
+  id: number;
+  task_id: number;
+  version_number: number;
+  title: string;
+  description?: string;
+  upgrade_reason?: string;
+  upgraded_from?: number;     // ID of the original task
+  created_at: Date;
+}
+
+/**
+ * Orchestration modes (Ralph pattern)
+ */
+export type OrchestrationMode =
+  | 'sequential'   // Execute tasks one by one
+  | 'parallel'     // Execute tasks concurrently
+  | 'dag'          // Directed Acyclic Graph - respect dependencies
+  | 'conditional'  // Branch based on conditions
+  | 'pipeline';    // Pipeline with data flow
+
+/**
+ * Orchestration graph node
+ */
+export interface OrchestrationNode {
+  task_id: number;
+  title: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dependencies: number[];      // Task IDs that must complete first
+  dependents: number[];        // Task IDs that depend on this
+  can_execute: boolean;        // Whether all dependencies are met
+}
+
+/**
+ * Orchestration plan
+ */
+export interface OrchestrationPlan {
+  mode: OrchestrationMode;
+  tasks: OrchestrationNode[];
+  execution_order: number[][];  // Array of task IDs that can run in parallel
+  total_tasks: number;
+  ready_tasks: number;
+  completed_tasks: number;
+  estimated_completion?: Date;
+}
+
+/**
+ * Checkpoint restore options
+ */
+export interface CheckpointRestoreOptions {
+  restore_memory: boolean;      // Restore short-term memory
+  restore_state: boolean;       // Restore execution state
+  continue_from: 'checkpoint' | 'beginning';
+}
+
+/**
+ * Task upgrade request
+ */
+export interface TaskUpgradeRequest {
+  task_id: number;
+  new_title: string;
+  new_description?: string;
+  upgrade_reason: string;
+  preserve_relationships: boolean;
+}

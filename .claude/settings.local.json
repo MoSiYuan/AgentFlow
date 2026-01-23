@@ -45,7 +45,21 @@
       "Bash(git reset:*)",
       "Bash(git mv:*)",
       "Bash(tree:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(./test-python-version.sh:*)",
+      "Bash(../python/simple-test.sh)",
+      "Bash(./simple-test.sh:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm install)",
+      "Bash(npm install:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm build:*)",
+      "Bash(node:*)",
+      "Bash(pnpm rebuild:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx node-gyp rebuild:*)",
+      "Bash(npm rebuild:*)",
+      "Bash(pnpm run build:*)"
     ]
   }
 }

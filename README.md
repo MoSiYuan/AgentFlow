@@ -1,182 +1,185 @@
-# AgentFlow - AI Agent 任务协作系统
-
-> **多进程并发，真 AI 执行** - 分布式任务协作平台
+# AgentFlow - AI Agent Task Collaboration System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8E.svg)](https://golang.org/)
-[![Python Version](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org/)
-[![Claude CLI](https://img.shields.io/badge/Claude%20CLI-1.0.102-blue.svg)](https://github.com/anthropics/claude-code)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen.svg)](https://nodejs.org/)
+[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8E.svg)](https://golang.org/)
 
-## 🎯 项目简介
+Master-Worker architecture for asynchronous AI task collaboration with 100% API-compatible dual-language implementation.
 
-AgentFlow 是一个 Master-Worker 架构的异步任务协作系统，支持真正的多进程并发和 Claude CLI 深度集成。
-
-## 📦 版本选择
-
-AgentFlow 提供两个版本，功能完全兼容，API 100% 相同：
-
-### 🐧 Go 版本（云端部署）
-
-**推荐场景**: Kubernetes pod、云端服务器、生产环境
-
-- ✅ 高性能（10,000+ req/s）
-- ✅ 低资源占用（~20MB）
-- ✅ 单一二进制文件
-- ✅ Docker/Kubernetes 友好
-
-**位置**: [golang/](golang/) | **文档**: [docs/installation.md](docs/installation.md#go-版本)
+## Quick Start
 
 ```bash
-cd golang
-./bin/master --mode standalone --port 8848
-./bin/worker --mode standalone --master http://127.0.0.1:8848 --auto
+# Install
+npm install -g @agentflow/skill
+
+# Create task
+agentflow create "Run tests" -d "npm test"
+
+# List tasks
+agentflow list
+
+# Check status
+agentflow status TASK-00000001
 ```
 
-### 🐍 Python 版本（本地部署）
+## Features
 
-**推荐场景**: 本地开发、个人使用、快速测试
+- ✅ **Task Orchestration** - DAG, parallel, sequential workflows
+- ✅ **Checkpoint Mechanism** - State persistence and recovery
+- ✅ **Git Locks** - Prevent concurrent conflicts
+- ✅ **Task Versioning** - Upgrade and history tracking
+- ✅ **Local CLI Execution** - Direct command execution
+- ✅ **Short-term Memory** - Agent context management
 
-- ✅ 零编译，即插即用
-- ✅ 跨平台（Windows/macOS/Linux）
-- ✅ 易调试和修改
-- ✅ pip 安装
+## Architecture
 
-**位置**: [python/](python/) | **文档**: [docs/installation.md](docs/installation.md#python-版本)
+```
+┌─────────────┐
+│   Master    │ Task Scheduler
+│  (Node.js)  │ HTTP API + WebSocket
+└─────┬───────┘
+      │
+      ├──▶ ┌─────────────┐
+      │    │   Worker 1  │ Local CLI
+      │    │  (Node.js)  │ Skills Execution
+      │    └─────────────┘
+      │
+      ├──▶ ┌─────────────┐
+      │    │   Worker 2  │ Cloud SDK
+      │    │  (Node.js)  │ AI Processing
+      │    └─────────────┘
+      │
+      └──▶ ...
+```
+
+## Usage
+
+### CLI
 
 ```bash
-cd python
-pip install -r requirements.txt
-python -m agentflow.cli master --port 8848
-python -m agentflow.cli worker --auto
+agentflow create "My Task" -d "Description"
+agentflow list --status pending
+agentflow exec "npm run build"
 ```
 
-## 🚀 快速开始
+### Programmatic
 
-### 1. 选择版本
+```typescript
+import { AgentFlowSkill } from '@agentflow/skill';
 
-```bash
-# 云端/生产 → Go 版本
-cd golang
+const skill = new AgentFlowSkill({
+  master_url: 'http://localhost:8848'
+});
 
-# 本地/开发 → Python 版本
-cd python
+// Create task
+const taskId = await skill.createTask({
+  title: 'Deploy',
+  description: 'Build and deploy app'
+});
+
+// Parallel execution
+await skill.executeParallel([
+  { title: 'Test', description: 'npm test' },
+  { title: 'Lint', description: 'npm run lint' }
+]);
 ```
 
-### 2. 启动 Master
+## Documentation
 
-```bash
-# Go 版本
-./bin/master --mode standalone --port 8848
+- [Skill Usage](docs/SKILL.md)
+- [API Reference](docs/API.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Getting Started](docs/GETTING_STARTED.md)
 
-# Python 版本
-python -m agentflow.cli master --port 8848
-```
-
-### 3. 启动 Worker
-
-```bash
-# Go 版本
-./bin/worker --mode standalone --master http://127.0.0.1:8848 --auto
-
-# Python 版本
-python -m agentflow.cli worker --auto
-```
-
-### 4. 创建任务
-
-```bash
-curl -X POST http://127.0.0.1:8848/api/tasks/create \
-  -H "Content-Type: application/json" \
-  -d '{
-    "task_id": "TASK-1",
-    "title": "测试任务",
-    "description": "shell:echo Hello AgentFlow",
-    "priority": "high"
-  }'
-```
-
-## 📊 核心特性
-
-- ✅ **真正的多进程并发** - 每个 Worker 独立进程，任务自动分配
-- ✅ **Claude CLI 深度集成** - AI 任务执行，4-5秒/任务
-- ✅ **完整 REST API** - 任务管理、Worker 监控
-- ✅ **SQLite 持久化** - 任务状态持久化存储
-- ✅ **上下文优化** - 节省 token，批量操作
-- ✅ **跨平台支持** - Windows/macOS/Linux
-
-## 📋 性能对比
-
-| 指标 | Go 版本 | Python 版本 |
-|------|---------|-------------|
-| HTTP 吞吐量 | 10,000+ req/s | 1,000+ req/s |
-| 内存使用 | ~20MB/进程 | ~50MB/进程 |
-| 启动时间 | <100ms | ~1s |
-| 并发能力 | 3+ Workers | 3+ Workers |
-| 二进制大小 | 34MB | N/A |
-| 依赖管理 | 无（静态链接） | Flask, requests |
-
-## 📁 项目结构
+## Project Structure
 
 ```
 AgentFlow/
-├── golang/              # Go 版本（云端部署）
-│   ├── bin/            # 预编译二进制
-│   ├── internal/       # 源代码
-│   └── deployments/    # Docker/K8s 配置
-│
-├── python/             # Python 版本（本地部署）
-│   ├── agentflow/      # Python 包
-│   └── requirements.txt
-│
-├── docs/               # 所有文档
-│   ├── installation.md # 安装指南
-│   ├── architecture.md # 架构设计
-│   └── scripts/        # 实用脚本
-│
-├── skills/             # Claude Code Skill
-│   └── agentflow.md    # Skill 手册
-│
-└── README.md           # 本文件
+├── nodejs/              # Node.js implementation
+│   ├── packages/
+│   │   ├── master/      # Master server
+│   │   ├── worker/      # Worker (CLI execution)
+│   │   ├── database/    # SQLite database layer
+│   │   ├── shared/      # Type definitions
+│   │   ├── skill/       # CLI skill ⭐ NEW
+│   │   └── cli/         # Main CLI
+│   └── test-*.js        # Integration tests
+├── golang/              # Go implementation
+│   ├── master/          # Go Master server
+│   └── worker/          # Go Worker
+└── docs/                # Documentation
 ```
 
-## 📚 文档
+## Installation
 
-- [安装指南](docs/installation.md) - Go 和 Python 版本安装步骤
-- [架构设计](docs/architecture.md) - 系统架构和设计理念
-- [API 文档](docs/api.md) - REST API 完整参考
-- [Skill 手册](skills/agentflow.md) - Claude Code 集成指南
+### From Source
 
-## 🎯 使用场景
+```bash
+# Node.js version
+cd nodejs
+npm install
+npm run build
+npm link
 
-### 云端部署（Go 版本）
-- ✅ Kubernetes pod 部署
-- ✅ Docker 容器化
-- ✅ 微服务架构
-- ✅ 高并发场景
+# Go version
+cd golang
+make build
+make install
+```
 
-### 本地开发（Python 版本）
-- ✅ 本地开发环境
-- ✅ 快速功能测试
-- ✅ 学习和调试
-- ✅ 个人项目
+### Using Skill Package
 
-## 🤝 贡献
+```bash
+cd nodejs/packages/skill
+npm link
+agentflow --help
+```
 
-欢迎提交 Issue 和 Pull Request！
+## Environment Variables
 
-详见 [贡献指南](docs/contributing.md)
+```bash
+export AGENTFLOW_MASTER_URL="http://localhost:8848"
+export AGENTFLOW_GROUP="default"
+export ANTHROPIC_API_KEY="sk-ant-..."  # For AI features
+```
 
-## 📄 许可证
+## Development
 
-MIT License - 详见 [LICENSE](LICENSE)
+```bash
+# Install dependencies
+cd nodejs && pnpm install
 
-## 🔗 相关链接
+# Build all packages
+npm run build
 
-- **GitHub**: https://github.com/MoSiYuan/AgentFlow
-- **分支**: [feature/1.0.0](https://github.com/MoSiYuan/AgentFlow/tree/feature/1.0.0)
-- **Issue**: https://github.com/MoSiYuan/AgentFlow/issues
+# Run tests
+npm test
+
+# Start Master
+node packages/master/dist/index.js
+
+# Start Worker
+node packages/worker/dist/index.js
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Acknowledgments
+
+- Built for [Claude Code](https://github.com/anthropics/claude-code)
+- Inspired by modern task orchestration systems
+- Powered by [Anthropic Claude](https://www.anthropic.com/claude)
 
 ---
 
-**版本**: v1.0.0
-**更新**: 2026-01-22
+**Version**: 2.0.0 | **Status**: Production Ready

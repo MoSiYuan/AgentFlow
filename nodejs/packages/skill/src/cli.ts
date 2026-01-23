@@ -143,7 +143,7 @@ program
       const taskData = JSON.parse(jsonStr);
 
       // 支持中文字段名
-      const title = taskData.title || taskData.title;
+      const title = taskData.title;
       const description = taskData.detail || taskData.description;
       const pass = taskData.pass;
 

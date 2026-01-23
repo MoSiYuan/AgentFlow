@@ -94,11 +94,8 @@ async function executeLocal(tasks) {
     // 启动 Master
     log.info('正在启动服务...');
 
-    // 使用 pnpm exec 来解决模块路径问题
+    // 检查是否使用 pnpm
     const masterDir = path.dirname(config.master.path);
-    const masterBin = path.join(path.dirname(masterDir), 'node_modules', '.bin', 'master');
-
-    // 检查是否有 master 命令
     let usePnpm = false;
     try {
       if (require('fs').existsSync(path.join(masterDir, '../../node_modules/.pnpm'))) {

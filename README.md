@@ -5,6 +5,8 @@
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8E.svg)](https://golang.org/)
 
 > **⚠️ Port Change**: Default port changed from `8848` to `6767` in v2.0.0. See [Migration Guide](PORT_MIGRATION_GUIDE.md) for details.
+>
+> **⚠️ Node.js Compatibility**: Node.js v24 有已知兼容性问题。推荐使用 Node.js 18-20 LTS 版本。
 
 Master-Worker architecture for asynchronous AI task collaboration with 100% API-compatible dual-language implementation.
 

@@ -1,0 +1,8 @@
+{
+  "master": {
+    "path": "nodejs/packages/master/dist/index.js"
+  },
+  "worker": {
+    "group": "local"
+  }
+}

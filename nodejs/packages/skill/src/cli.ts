@@ -133,29 +133,46 @@ program
     console.log(chalk.gray('Version: 1.0.0'));
   });
 
-// Create task command
+// Create task command - supports JSON format with Chinese fields
 program
   .command('create')
   .description('Create a new task')
-  .argument('<title>', 'Task title')
-  .option('-d, --description <description>', 'Task description')
-  .option('-g, --group <group>', 'Task group name', 'default')
-  .action(async (title, options) => {
-    const skill = new AgentFlowSkill({ group_name: options.group });
-    const spinner = ora('Creating task...').start();
-
+  .argument('<json>', 'Task JSON: {"title":"...","detail":"...","pass":"..."}')
+  .action(async (jsonStr) => {
     try {
+      const taskData = JSON.parse(jsonStr);
+
+      // 支持中文字段名
+      const title = taskData.title || taskData.title;
+      const description = taskData.detail || taskData.description;
+      const pass = taskData.pass;
+
+      if (!title || !description) {
+        console.error(chalk.red('错误: 缺少必填字段 title 或 detail'));
+        process.exit(1);
+      }
+
+      console.log(chalk.bold(`\n创建任务: ${title}`));
+      if (pass) {
+        console.log(chalk.gray(`完成条件: ${pass}`));
+      }
+      console.log(chalk.gray(`命令: ${description}\n`));
+
+      const skill = new AgentFlowSkill({ group_name: 'local' });
       const taskId = await skill.createTask({
         title,
-        description: options.description || title,
-        group_name: options.group,
+        description,
+        group_name: 'local',
       });
 
-      spinner.succeed(chalk.green(`Task created: ${taskId}`));
-      console.log(chalk.gray(`  Master: ${skill['masterUrl']}`));
-      console.log(chalk.gray(`  Group: ${options.group}`));
+      console.log(chalk.green(`✓ 任务已创建: ${taskId}\n`));
     } catch (error: any) {
-      spinner.fail(chalk.red(`Failed to create task: ${error.message}`));
+      if (error instanceof SyntaxError) {
+        console.error(chalk.red('JSON 格式错误'));
+        console.error(chalk.gray('示例: {"title":"任务标题","detail":"命令","pass":"完成条件"}'));
+      } else {
+        console.error(chalk.red(`创建失败: ${error.message}`));
+      }
       process.exit(1);
     }
   });
@@ -292,6 +309,192 @@ program
       }
     } catch (error: any) {
       spinner.fail(chalk.red(`Health check failed: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// Run command - execute tasks locally
+program
+  .command('run')
+  .description('Execute tasks locally with auto-managed services')
+  .argument('[json]', 'JSON array: ["task1","task2"]', '')
+  .action(async (jsonStr) => {
+    const { spawn } = require('child_process');
+    const path = require('path');
+
+    let tasks = [];
+
+    // 解析任务
+    if (jsonStr) {
+      try {
+        tasks = JSON.parse(jsonStr);
+        if (!Array.isArray(tasks)) {
+          throw new Error('输入必须是数组');
+        }
+      } catch (error: any) {
+        console.error(chalk.red('JSON 格式错误:', error.message));
+        console.error(chalk.gray('示例: ["npm test","npm run build"]'));
+        process.exit(1);
+      }
+    } else {
+      console.error(chalk.red('请提供任务数组'));
+      console.error(chalk.gray('示例: agentflow run ["npm test","npm run build"]'));
+      process.exit(1);
+    }
+
+    const masterPath = path.join(__dirname, '../../master/dist/index.js');
+    const masterURL = 'http://localhost:6767';
+
+    let masterProcess = null;
+    let workerProcess = null;
+
+    const log = {
+      info: (msg: string) => console.log(chalk.gray(`  ${msg}`)),
+      success: (msg: string) => console.log(chalk.green(`  ✓ ${msg}`)),
+      error: (msg: string) => console.error(chalk.red(`  ✗ ${msg}`))
+    };
+
+    try {
+      console.log(chalk.bold('\nAgentFlow 本地执行\n'));
+
+      // 启动 Master
+      log.info('正在启动服务...');
+      masterProcess = spawn('node', [masterPath], {
+        stdio: 'pipe',
+        env: { ...process.env, NODE_ENV: 'development' }
+      });
+
+      masterProcess.on('error', (err: any) => {
+        log.error(`Master 启动失败: ${err.message}`);
+        process.exit(1);
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      const skill = new AgentFlowSkill({ master_url: masterURL });
+      let retries = 10;
+      let isHealthy = false;
+
+      while (retries > 0 && !isHealthy) {
+        try {
+          isHealthy = await skill.checkHealth();
+          if (isHealthy) break;
+        } catch {}
+        retries--;
+        await new Promise(r => setTimeout(r, 500));
+      }
+
+      if (!isHealthy) {
+        log.error('Master 启动失败');
+        process.exit(1);
+      }
+
+      log.success('服务已就绪');
+
+      // 启动 Worker
+      log.info('正在注册工作节点...');
+      const workerCode = `
+        const { Worker } = require('@agentflow/worker');
+        const worker = new Worker({
+          master_url: '${masterURL}',
+          group_name: 'local'
+        });
+        worker.start();
+      `;
+
+      workerProcess = spawn('node', ['-e', workerCode], {
+        stdio: 'pipe',
+        env: { ...process.env },
+        cwd: path.join(__dirname, '../..')
+      });
+
+      workerProcess.on('error', (err: any) => {
+        log.error(`Worker 启动失败: ${err.message}`);
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      log.success('工作节点已就绪');
+
+      // 创建任务
+      log.info('正在创建任务...');
+      const taskIds: string[] = [];
+
+      for (let i = 0; i < tasks.length; i++) {
+        const taskId = await skill.createTask({
+          title: `任务 ${i + 1}`,
+          description: tasks[i],
+          group_name: 'local'
+        });
+        taskIds.push(taskId);
+        log.success(tasks[i]);
+      }
+
+      console.log();
+      log.info(`共创建 ${taskIds.length} 个任务`);
+
+      // 监控执行
+      log.info('正在执行任务...');
+      const startTime = Date.now();
+      const maxWait = 300000;
+
+      while (Date.now() - startTime < maxWait) {
+        const statuses = await Promise.all(
+          taskIds.map(id => skill.getTaskStatus(id).catch(() => ({ status: 'pending' })))
+        );
+
+        const completed = statuses.filter((t: any) => t.status === 'completed').length;
+        const failed = statuses.filter((t: any) => t.status === 'failed').length;
+        const total = taskIds.length;
+
+        process.stdout.write(`\r  进度: ${completed}/${total} 完成, ${failed} 失败`);
+
+        if (completed + failed >= total) {
+          console.log();
+          log.success('所有任务已完成');
+          break;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+
+      // 关闭服务
+      console.log();
+      log.info('正在关闭服务...');
+
+      workerProcess!.kill('SIGTERM');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      try {
+        await fetch(`${masterURL}/api/v1/shutdown`, { method: 'POST' });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } catch {}
+
+      masterProcess!.kill('SIGTERM');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      try { masterProcess!.kill('SIGKILL'); } catch {}
+      try { workerProcess!.kill('SIGKILL'); } catch {}
+
+      log.success('执行完成\n');
+
+    } catch (error: any) {
+      log.error(error.message);
+
+      try {
+        if (masterProcess) masterProcess.kill();
+        if (workerProcess) workerProcess.kill();
+      } catch {}
+
+      process.exit(1);
+    }
+  });
+
+      // Cleanup
+      try {
+        masterProcess.kill();
+        workerProcess.kill();
+      } catch {}
+
       process.exit(1);
     }
   });

@@ -89,7 +89,7 @@ golang/bin/oneshot      - Worker（单次模式）
 
 **输出示例**:
 ```
-✅ Starting Master on port 8848...
+✅ Starting Master on port 6767...
 ✅ Master started (PID: 12345)
 ✅ Starting Worker in auto mode...
 ✅ Worker started (PID: 12346)
@@ -104,7 +104,7 @@ golang/bin/oneshot      - Worker（单次模式）
 **输出示例**:
 ```
 📊 AgentFlow Status:
-├─ Master: Running (PID: 12345, Port: 8848)
+├─ Master: Running (PID: 12345, Port: 6767)
 ├─ Worker: Running (PID: 12346, Mode: auto)
 └─ Database: .claude/cpds-manager/agentflow.db
 ```
@@ -195,7 +195,7 @@ sudo systemctl enable agentflow-master agentflow-worker
 **输出示例**:
 ```
 📊 AgentFlow Status:
-├─ Master: Active (PID: 1234, Port: 8848)
+├─ Master: Active (PID: 1234, Port: 6767)
 ├─ Worker: Active (PID: 1235, Mode: auto)
 ├─ Services:
 │  ├─ agentflow-master.service: enabled
@@ -319,7 +319,7 @@ scripts\deploy-windows.bat status
 **输出示例**:
 ```
 📊 AgentFlow Status:
-├─ Master: Running (Port: 8848)
+├─ Master: Running (Port: 6767)
 ├─ Worker: Running (Mode: auto)
 └─ Database: .claude\cpds-manager\agentflow.db
 ```
@@ -374,14 +374,14 @@ golang\bin\worker.exe -config C:\path\to\custom-config.yaml
 
 **macOS/Linux**:
 ```bash
-# 允许 8848 端口
-sudo ufw allow 8848/tcp  # Ubuntu/Debian
-sudo firewall-cmd --add-port=8848/tcp --permanent  # Fedora/RHEL
+# 允许 6767 端口
+sudo ufw allow 6767/tcp  # Ubuntu/Debian
+sudo firewall-cmd --add-port=6767/tcp --permanent  # Fedora/RHEL
 ```
 
 **Windows PowerShell**:
 ```powershell
-New-NetFirewallRule -DisplayName "AgentFlow Master" -Direction Inbound -LocalPort 8848 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "AgentFlow Master" -Direction Inbound -LocalPort 6767 -Protocol TCP -Action Allow
 ```
 
 ---
@@ -438,11 +438,11 @@ chmod +x scripts/deploy-linux.sh
 **解决**:
 ```bash
 # macOS/Linux: 查找并终止占用端口的进程
-lsof -ti:8848 | xargs kill -9  # macOS
-fuser -k 8848/tcp              # Linux
+lsof -ti:6767 | xargs kill -9  # macOS
+fuser -k 6767/tcp              # Linux
 
 # Windows: 查找并终止进程
-netstat -ano | findstr :8848
+netstat -ano | findstr :6767
 taskkill /PID <PID> /F
 ```
 
@@ -480,7 +480,7 @@ sudo -u agentflow /path/to/golang/bin/master -config /path/to/config.yaml
 
 1. **创建任务** - 通过 REST API 或 CLI
    ```bash
-   curl -X POST http://127.0.0.1:8848/api/v1/tasks \
+   curl -X POST http://127.0.0.1:6767/api/v1/tasks \
      -H "Content-Type: application/json" \
      -d '{"title": "测试任务", "description": "echo Hello AgentFlow"}'
    ```

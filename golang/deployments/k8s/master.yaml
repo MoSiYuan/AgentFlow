@@ -46,7 +46,7 @@ spec:
         args: ["master", "--db", "/data/agentflow.db", "--host", "0.0.0.0"]
         ports:
         - name: http
-          containerPort: 8848
+          containerPort: 6767
           protocol: TCP
         env:
         - name: DATABASE_PATH
@@ -95,7 +95,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 8848
+  - port: 6767
     targetPort: http
     protocol: TCP
     name: http
@@ -113,7 +113,7 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 8848
+  - port: 6767
     targetPort: http
     protocol: TCP
     name: http

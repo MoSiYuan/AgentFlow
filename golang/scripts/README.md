@@ -82,7 +82,7 @@ cd golang
 
 ```bash
 # 确保 Master 正在运行
-./bin/master --mode standalone --port 8848 &
+./bin/master --mode standalone --port 6767 &
 
 # 运行健康检查
 ./scripts/health_check.sh
@@ -92,8 +92,8 @@ cd golang
 
 ```bash
 # 确保 Master 和 Worker 正在运行
-./bin/master --mode standalone --port 8848 &
-./bin/worker --mode standalone --master http://127.0.0.1:8848 --auto &
+./bin/master --mode standalone --port 6767 &
+./bin/worker --mode standalone --master http://127.0.0.1:6767 --auto &
 
 # 创建示例任务
 ./scripts/example_tasks.sh

@@ -87,7 +87,7 @@ cpds add "编译 Windows 二进制" \
 ```bash
 # 启动 Docker Worker
 docker run -d \
-  -e MASTER_URL=http://master:8848 \
+  -e MASTER_URL=http://master:6767 \
   -e WORKER_GROUP=docker \
   -v /var/run/docker.sock:/var/run/docker.sock \
   agentflow-go worker
@@ -124,7 +124,7 @@ spec:
         args: ["worker"]
         env:
         - name: MASTER_URL
-          value: "http://cpds-master:8848"
+          value: "http://cpds-master:6767"
         - name: WORKER_GROUP
           value: "k8s"
 ```
@@ -194,7 +194,7 @@ services:
     image: agentflow-go:latest
     command: master --db /data/agentflow.db
     ports:
-      - "8848:8848"
+      - "6767:6767"
     volumes:
       - cpds-data:/data
 
@@ -202,7 +202,7 @@ services:
     image: agentflow-go:latest
     command: worker
     environment:
-      - MASTER_URL=http://master:8848
+      - MASTER_URL=http://master:6767
       - WORKER_GROUP=linux
     depends_on:
       - master
@@ -211,7 +211,7 @@ services:
     image: agentflow-go:latest
     command: worker
     environment:
-      - MASTER_URL=http://master:8848
+      - MASTER_URL=http://master:6767
       - WORKER_GROUP=docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -222,7 +222,7 @@ services:
     image: agentflow-go:windows
     command: worker
     environment:
-      - MASTER_URL=http://master:8848
+      - MASTER_URL=http://master:6767
       - WORKER_GROUP=windows
     depends_on:
       - master
@@ -367,10 +367,10 @@ $ cpds list --group docker
 
 ```bash
 # 查询所有 docker 组 workers
-curl "http://localhost:8848/api/v1/workers?group=docker"
+curl "http://localhost:6767/api/v1/workers?group=docker"
 
 # 查询所有 docker 组待执行任务
-curl "http://localhost:8848/api/v1/tasks?status=pending&group=docker"
+curl "http://localhost:6767/api/v1/tasks?status=pending&group=docker"
 ```
 
 ## 常见问题

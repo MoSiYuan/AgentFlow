@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+*.log
+
+# Tests
+test/
+tests/
+*.test.js
+*.spec.js
+coverage/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+docs/
+examples/
+*.md
+
+# Config files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Old directories
+old/
+archives/
+scripts/
+
+# Go (not needed for Node.js build)
+golang/
+*.go
+go.mod
+go.sum
+
+# Other
+.dockerignore
+Dockerfile
+docker-compose.yml
+*.sql
+.db

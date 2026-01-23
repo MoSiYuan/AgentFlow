@@ -79,15 +79,15 @@ curl -X POST http://localhost:8849/execute \
 **测试**:
 ```bash
 # Terminal 1
-./bin/master --port 8848
+./bin/master --port 6767
 
 # Terminal 2: 创建任务
-curl -X POST http://127.0.0.1:8848/api/v1/tasks \
+curl -X POST http://127.0.0.1:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{"title": "Oneshot Test", "description": "shell:echo test"}'
 
 # Terminal 3: oneshot 执行
-./bin/worker --master http://127.0.0.1:8848 --oneshot
+./bin/worker --master http://127.0.0.1:6767 --oneshot
 # 应该执行一个任务后自动退出
 ```
 
@@ -384,7 +384,7 @@ CREATE TABLE conflict_resolutions (
 
 ```bash
 # 为任务 1 创建子任务
-curl -X POST http://127.0.0.1:8848/api/v1/tasks \
+curl -X POST http://127.0.0.1:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Migrate HTTP Executor",

@@ -1,20 +1,34 @@
 # AgentFlow Documentation
 
-## Quick Links
+## ⚠️ Important Notice
 
-- [README](../README.md) - Project overview
-- [Skill Usage](SKILL.md) - AgentFlow Skill guide
-- [API Reference](API.md) - Complete API documentation
-- [Architecture](ARCHITECTURE.md) - System architecture
-- [Getting Started](GETTING_STARTED.md) - Installation guide
-- [Deployment](DEPLOYMENT.md) - Deployment guide
+**Port Change (v2.0.0)**: Default port changed from `8848` to `6767`.
+- [Migration Guide](../PORT_MIGRATION_GUIDE.md) - How to update your configuration
+- [Port Change Summary](../PORT_CHANGE.md) - Technical details
 
-## AI Integration
+## Core Documentation
 
-- [AI Claude](AI_CLAUDE.md) - Using with Claude CLI
-- [AI Deployment](AI_DEPLOYMENT.md) - AI deployment guide
-- [AI Quickstart](AI_QUICKSTART.md) - Quick start guide
-- [AI README](AI_README.md) - AI features overview
+- [README](../README.md) - Project overview and features
+- [Skill Usage](SKILL.md) - Command reference and API
+- [AI Integration](AI_INTEGRATION.md) - AI guide with examples ⭐
+- [Architecture](ARCHITECTURE.md) - System design and components
+
+## Quick Start
+
+```bash
+# Install AgentFlow skill
+npm install -g @agentflow/skill
+
+# Start Master server (now on port 6767)
+cd nodejs
+node packages/master/dist/index.js
+
+# Set environment variable
+export AGENTFLOW_MASTER_URL="http://localhost:6767"
+
+# Create task
+agentflow create "Run tests" -d "npm test"
+```
 
 ## Archives
 

@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agentflow
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentflow-master
+  namespace: agentflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentflow-master
+  template:
+    metadata:
+      labels:
+        app: agentflow-master
+    spec:
+      containers:
+      - name: master
+        image: agentflow/master:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 6767
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: AGENTFLOW_MASTER_URL
+          value: "http://agentflow-master:6767"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 6767
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 6767
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: agentflow-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentflow-master
+  namespace: agentflow
+spec:
+  selector:
+    app: agentflow-master
+  ports:
+  - port: 6767
+    targetPort: 6767
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentflow-worker
+  namespace: agentflow
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: agentflow-worker
+  template:
+    metadata:
+      labels:
+        app: agentflow-worker
+    spec:
+      containers:
+      - name: worker
+        image: agentflow/worker:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: AGENTFLOW_MASTER_URL
+          value: "http://agentflow-master:6767"
+        - name: AGENTFLOW_GROUP
+          value: "k8s"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: agentflow-secrets
+              key: anthropic-api-key
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: agentflow-pvc
+  namespace: agentflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agentflow-ingress
+  namespace: agentflow
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: agentflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: agentflow-master
+            port:
+              number: 6767

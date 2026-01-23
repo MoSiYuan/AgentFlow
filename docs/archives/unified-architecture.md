@@ -439,7 +439,7 @@ interface Database {
 # Master 服务器配置
 master:
   host: "0.0.0.0"
-  port: 8848
+  port: 6767
   db_path: ".claude/cpds-manager/agentflow.db"
   auto_shutdown: false
   log_level: "info"
@@ -476,7 +476,7 @@ websocket:
 # Worker 基础配置
 worker:
   id: ""  # 留空自动生成
-  master_url: "http://localhost:8848"
+  master_url: "http://localhost:6767"
   group_name: "default"
   mode: "auto"  # auto | manual | oneshot
 
@@ -525,13 +525,13 @@ workspace:
 ```bash
 # Master
 AGENTFLOW_MASTER_HOST=0.0.0.0
-AGENTFLOW_MASTER_PORT=8848
+AGENTFLOW_MASTER_PORT=6767
 AGENTFLOW_DB_PATH=.claude/cpds-manager/agentflow.db
 AGENTFLOW_LOG_LEVEL=info
 
 # Worker
 AGENTFLOW_WORKER_ID=worker-1
-AGENTFLOW_MASTER_URL=http://localhost:8848
+AGENTFLOW_MASTER_URL=http://localhost:6767
 AGENTFLOW_GROUP_NAME=default
 AGENTFLOW_MODE=auto
 

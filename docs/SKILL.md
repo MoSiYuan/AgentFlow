@@ -11,6 +11,21 @@ npm link
 
 ## CLI Commands
 
+### Project Management
+
+```bash
+# Initialize AgentFlow in current directory
+agentflow init [--force]
+
+# Check installation status
+agentflow info
+
+# Update templates (coming soon)
+agentflow update
+```
+
+### Task Management
+
 ```bash
 # Create task
 agentflow create "Task title" -d "Description"
@@ -35,7 +50,7 @@ agentflow health
 import { AgentFlowSkill } from '@agentflow/skill';
 
 const skill = new AgentFlowSkill({
-  master_url: 'http://localhost:8848',
+  master_url: 'http://localhost:6767',
   group_name: 'default'
 });
 
@@ -67,16 +82,16 @@ const tasks = await skill.listTasks('pending');
 ## Environment
 
 ```bash
-export AGENTFLOW_MASTER_URL="http://localhost:8848"
+export AGENTFLOW_MASTER_URL="http://localhost:6767"
 export AGENTFLOW_GROUP="default"
 ```
 
 ## Documentation
 
-- [API Reference](API.md)
-- [Architecture](ARCHITECTURE.md)
-- [Getting Started](GETTING_STARTED.md)
+- [Architecture](ARCHITECTURE.md) - System design
+- [AI Integration](AI_INTEGRATION.md) - AI guide with examples
+- [Project Config](../.agentflow/README.md) - Agent templates & skills
 
 ---
 
-*Version: 1.0.0 | License: MIT*
+*Version: 2.0.0 | License: MIT*

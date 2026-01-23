@@ -29,7 +29,7 @@ export class AgentFlowSkill {
   private groupName: string;
 
   constructor(config: AgentFlowConfig = {}) {
-    this.masterUrl = config.master_url || process.env.AGENTFLOW_MASTER_URL || 'http://localhost:8848';
+    this.masterUrl = config.master_url || process.env.AGENTFLOW_MASTER_URL || 'http://localhost:6767';
     this.groupName = config.group_name || process.env.AGENTFLOW_GROUP || 'default';
   }
 

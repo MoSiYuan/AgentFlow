@@ -86,7 +86,7 @@ cp skills/agentflow.md ~/.claude/commands/
 /agentflow list
 
 # 创建任务（通过 API）
-curl -X POST http://127.0.0.1:8848/api/tasks/create \
+curl -X POST http://127.0.0.1:6767/api/tasks/create \
   -H "Content-Type: application/json" \
   -d '{"task_id": "T1", "title": "Test", "description": "shell:echo Hello", "priority": "high"}'
 ```
@@ -126,13 +126,13 @@ chmod +x bin/*
 
 ```bash
 # Terminal 1: 启动 Master
-./bin/master --mode standalone --port 8848
+./bin/master --mode standalone --port 6767
 
 # Terminal 2: 启动 Worker
-./bin/worker --mode standalone --master http://127.0.0.1:8848 --name worker1 --auto
+./bin/worker --mode standalone --master http://127.0.0.1:6767 --name worker1 --auto
 
 # Terminal 3: 测试
-curl http://127.0.0.1:8848/api/health
+curl http://127.0.0.1:6767/api/health
 ```
 
 ### 方式 3: Docker 部署
@@ -158,7 +158,7 @@ docker-compose -f deployments/docker/docker-compose.standalone.yml up -d
 docker-compose -f deployments/docker/docker-compose.cloud.yml up -d
 
 # 4. 验证
-curl http://localhost:8848/api/health
+curl http://localhost:6767/api/health
 ```
 
 #### Docker Compose 配置
@@ -170,7 +170,7 @@ services:
   master:
     image: agentflow:latest
     ports:
-      - "8848:8848"
+      - "6767:6767"
     volumes:
       - agentflow-data:/data
     command: ["./master", "--mode", "standalone", "--auto-shutdown"]
@@ -187,7 +187,7 @@ services:
   master:
     image: agentflow:latest
     ports:
-      - "8848:8848"
+      - "6767:6767"
     volumes:
       - agentflow-data:/data
     command: ["./master", "--mode", "cloud"]
@@ -198,7 +198,7 @@ services:
     depends_on:
       - master
     environment:
-      - MASTER_URL=http://master:8848
+      - MASTER_URL=http://master:6767
       - MODE=cloud
     restart: always
     deploy:
@@ -220,7 +220,7 @@ volumes:
 Flags:
   --mode string       # 部署模式: standalone/cloud (default "standalone")
   --host string       # 监听地址 (default "0.0.0.0")
-  -p, --port int        # 监听端口 (default 8848)
+  -p, --port int        # 监听端口 (default 6767)
   --auto-shutdown      # standalone 模式：任务完成后自动关闭
   -h, --help          # 帮助信息
 ```
@@ -230,7 +230,7 @@ Flags:
 ```bash
 export AGENTFLOW_MODE=standalone
 export AGENTFLOW_HOST=0.0.0.0
-export AGENTFLOW_PORT=8848
+export AGENTFLOW_PORT=6767
 export AGENTFLOW_AUTO_SHUTDOWN=true
 ```
 
@@ -243,7 +243,7 @@ export AGENTFLOW_AUTO_SHUTDOWN=true
 
 Flags:
   --mode string       # 部署模式: standalone/cloud (default "standalone")
-  -m, --master string  # Master URL (default "http://localhost:8848")
+  -m, --master string  # Master URL (default "http://localhost:6767")
   -n, --name string     # Worker 名称 (default: hostname)
   -a, --auto           # 自动模式：自动拉取并执行任务
   --oneshot            # 执行一个任务后退出（standalone 模式）
@@ -254,7 +254,7 @@ Flags:
 
 ```bash
 export AGENTFLOW_MODE=standalone
-export AGENTFLOW_MASTER_URL=http://localhost:8848
+export AGENTFLOW_MASTER_URL=http://localhost:6767
 export AGENTFLOW_WORKER_NAME=worker1
 export AGENTFLOW_AUTO=true
 ```
@@ -340,13 +340,13 @@ worker (34MB)
 ### 2. 测试 Master
 
 ```bash
-./bin/master --mode standalone --port 8848 &
+./bin/master --mode standalone --port 6767 &
 MASTER_PID=$!
 
 sleep 2
 
 # 测试 API
-curl http://localhost:8848/api/health
+curl http://localhost:6767/api/health
 
 # 停止 Master
 kill $MASTER_PID
@@ -360,17 +360,17 @@ kill $MASTER_PID
 ### 3. 测试 Worker
 
 ```bash
-./bin/master --mode standalone --port 8848 &
+./bin/master --mode standalone --port 6767 &
 sleep 2
 
 # 启动 Worker
-./bin/worker worker --mode standalone --master http://127.0.0.1:8848 \
+./bin/worker worker --mode standalone --master http://127.0.0.1:6767 \
   --name test-worker --auto
 
 sleep 3
 
 # 检查状态
-curl http://localhost:8848/api/workers
+curl http://localhost:6767/api/workers
 
 # 清理
 killall master worker 2>/dev/null || true
@@ -385,11 +385,11 @@ killall master worker 2>/dev/null || true
 
 ```bash
 # 启动 Master
-./bin/master --mode standalone --port 8848 &
+./bin/master --mode standalone --port 6767 &
 sleep 2
 
 # 创建测试任务
-curl -X POST http://localhost:8848/api/tasks/create \
+curl -X POST http://localhost:6767/api/tasks/create \
   -H "Content-Type: application/json" \
   -d '{
     "task_id": "TEST-INSTALL",
@@ -399,7 +399,7 @@ curl -X POST http://localhost:8848/api/tasks/create \
   }'
 
 # 查询任务
-curl http://localhost:8848/api/tasks/pending
+curl http://localhost:6767/api/tasks/pending
 
 # 清理
 killall master 2>/dev/null || true
@@ -411,16 +411,16 @@ killall master 2>/dev/null || true
 
 **错误信息**:
 ```
-listen tcp 0.0.0.0:8848: bind: address already in use
+listen tcp 0.0.0.0:6767: bind: address already in use
 ```
 
 **解决方案**:
 ```bash
 # 查找占用进程
-lsof -i:8848
+lsof -i:6767
 
 # 杀掉进程
-kill -9 $(lsof -ti:8848)
+kill -9 $(lsof -ti:6767)
 
 # 或使用其他端口
 ./bin/master --port 8850
@@ -436,13 +436,13 @@ Error: failed to register: connection refused
 **解决方案**:
 ```bash
 # 1. 检查 Master 是否运行
-curl http://localhost:8848/api/health
+curl http://localhost:6767/api/health
 
 # 2. 检查网络
 ping localhost
 
 # 3. 使用 127.0.0.1 而非 localhost（IPv6 问题）
-./bin/worker --master http://127.0.0.1:8848
+./bin/worker --master http://127.0.0.1:6767
 ```
 
 ### 问题 3: claudecli 执行失败
@@ -521,7 +521,7 @@ export AGENTFLOW_DB=/path/to/custom.db
 
 ```bash
 # Master 1
-./bin/master --port 8848 &
+./bin/master --port 6767 &
 
 # Master 2
 ./bin/master --port 8849 &
@@ -539,7 +539,7 @@ export AGENTFLOW_DB=/path/to/custom.db
 
 ```bash
 # 创建不同优先级的任务
-curl -X POST http://localhost:8848/api/tasks/create \
+curl -X POST http://localhost:6767/api/tasks/create \
   -H "Content-Type: application/json" \
   -d '{
     "task_id": "HIGH-1",
@@ -566,7 +566,7 @@ git pull origin feature/1.0.0
 
 # 4. 重启服务
 killall master worker
-./bin/master --mode standalone --port 8848 &
+./bin/master --mode standalone --port 6767 &
 ```
 
 ### 卸载

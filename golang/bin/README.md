@@ -15,7 +15,7 @@
 ./bin/master --mode standalone --auto-shutdown
 
 # 启动 Worker
-./bin/worker --mode standalone --master http://localhost:8848
+./bin/worker --mode standalone --master http://localhost:6767
 
 # 或使用 agentflow
 ./bin/agentflow master --mode standalone

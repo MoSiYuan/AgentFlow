@@ -26,4 +26,4 @@ spec:
           service:
             name: agentflow-master
             port:
-              number: 8848
+              number: 6767

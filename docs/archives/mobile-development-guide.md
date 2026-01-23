@@ -46,7 +46,7 @@ go build -o bin/master cmd/master/main.go
 cat > config.yaml <<EOF
 master:
   host: "0.0.0.0"  # 监听所有网络接口
-  port: 8848
+  port: 6767
   db_path: "/var/lib/agentflow/agentflow.db"
   auto_start: false
 EOF
@@ -57,11 +57,11 @@ mkdir -p /var/lib/agentflow
 # 6. 启动 Master（使用 systemd 或 supervisor）
 nohup ./bin/master -config config.yaml > /var/log/agentflow.log 2>&1 &
 
-# 7. 配置防火墙（开放 8848 端口）
+# 7. 配置防火墙（开放 6767 端口）
 # Ubuntu/Debian:
-sudo ufw allow 8848/tcp
+sudo ufw allow 6767/tcp
 # CentOS/RHEL:
-sudo firewall-cmd --permanent --add-port=8848/tcp
+sudo firewall-cmd --permanent --add-port=6767/tcp
 sudo firewall-cmd --reload
 
 # 8. 配置域名（可选，推荐使用 nginx 反向代理）
@@ -91,7 +91,7 @@ spec:
       - name: master
         image: your-registry/agentflow-master:latest
         ports:
-        - containerPort: 8848
+        - containerPort: 6767
         volumeMounts:
         - name: data
           mountPath: /var/lib/agentflow
@@ -99,7 +99,7 @@ spec:
         - name: MASTER_HOST
           value: "0.0.0.0"
         - name: MASTER_PORT
-          value: "8848"
+          value: "6767"
       volumes:
       - name: data
         persistentVolumeClaim:
@@ -112,8 +112,8 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 8848
-    targetPort: 8848
+  - port: 6767
+    targetPort: 6767
   selector:
     app: agentflow-master
 ---
@@ -155,7 +155,7 @@ pip install -r requirements.txt
 
 :: 4. 启动 Worker（Windows 组）
 python -m agentflow.cli worker ^
-  --master https://your-cloud-server:8848 ^
+  --master https://your-cloud-server:6767 ^
   --group windows ^
   --auto
 ```
@@ -200,7 +200,7 @@ class AgentFlowWorkerService(win32serviceutil.ServiceFramework):
         self.process = subprocess.Popen([
             sys.executable, '-m', 'agentflow.cli',
             'worker',
-            '--master', 'https://your-cloud-server:8848',
+            '--master', 'https://your-cloud-server:6767',
             '--group', 'windows',
             '--auto'
         ])
@@ -233,7 +233,7 @@ pip3 install -r requirements.txt
 
 # 4. 启动 Worker（macOS 组）
 python3 -m agentflow.cli \
-  --master https://your-cloud-server:8848 \
+  --master https://your-cloud-server:6767 \
   --group macos \
   --auto
 ```
@@ -255,7 +255,7 @@ python3 -m agentflow.cli \
         <string>agentflow.cli</string>
         <string>worker</string>
         <string>--master</string>
-        <string>https://your-cloud-server:8848</string>
+        <string>https://your-cloud-server:6767</string>
         <string>--group</string>
         <string>macos</string>
         <string>--auto</string>
@@ -290,7 +290,7 @@ launchctl start com.agentflow.worker
 
 你是一个软件开发助手，可以通过 AgentFlow API 控制云端 Master。
 
-**云端 Master 地址**: https://your-cloud-server:8848
+**云端 Master 地址**: https://your-cloud-server:6767
 
 **可用 Worker 组**:
 - windows: Windows 编译和 GUI 操作
@@ -307,7 +307,7 @@ launchctl start com.agentflow.worker
 
 **API 示例**:
 ```bash
-curl -X POST https://your-cloud-server:8848/api/v1/tasks \
+curl -X POST https://your-cloud-server:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "编译 Windows 版本",
@@ -450,7 +450,7 @@ def mobile_quick_compile():
 
     # 初始化客户端（云端 Master 地址）
     client = AgentFlowMobileClient(
-        master_url="https://your-cloud-server:8848",
+        master_url="https://your-cloud-server:6767",
         api_key="your-api-key"  # 可选
     )
 
@@ -495,7 +495,7 @@ if __name__ == '__main__':
 
 ```python
 # 从手机执行
-client = AgentFlowMobileClient("https://your-cloud-server:8848")
+client = AgentFlowMobileClient("https://your-cloud-server:6767")
 
 # 一次性提交多个平台编译
 tasks = client.cross_compile("/path/to/project")
@@ -547,7 +547,7 @@ https://your-storage.com/compilation/xxx
 
 ```python
 # 手机端提交完整开发流程
-client = AgentFlowMobileClient("https://your-cloud-server:8848")
+client = AgentFlowMobileClient("https://your-cloud-server:6767")
 
 # 1. 运行测试（Windows）
 task1 = client.create_task(
@@ -587,7 +587,7 @@ print(f"已创建 3 个任务: {task1['task_id']}, {task2['task_id']}, {task3['t
 ### 查看所有 Workers 状态
 
 ```bash
-curl https://your-cloud-server:8848/api/v1/workers
+curl https://your-cloud-server:6767/api/v1/workers
 ```
 
 **响应示例**:
@@ -622,7 +622,7 @@ curl https://your-cloud-server:8848/api/v1/workers
 ### 查看统计信息
 
 ```bash
-curl https://your-cloud-server:8848/api/v1/stats
+curl https://your-cloud-server:6767/api/v1/stats
 ```
 
 **响应示例**:
@@ -654,7 +654,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://localhost:8848;
+        proxy_pass http://localhost:6767;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

@@ -65,7 +65,7 @@ export class CPDSClient {
   constructor(config: CPDSConfig = {}) {
     this.dbPath = config.dbPath || process.env.CPDS_DB_PATH || "agentflow.db";
     this.masterUrl =
-      config.masterUrl || process.env.MASTER_URL || "http://localhost:8848";
+      config.masterUrl || process.env.MASTER_URL || "http://localhost:6767";
     this.workerGroup =
       config.workerGroup || process.env.WORKER_GROUP || "local";
   }

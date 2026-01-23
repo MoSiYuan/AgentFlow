@@ -9,7 +9,14 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
+import { existsSync, copyFileSync, mkdirSync, readdirSync } from 'fs';
+import { join } from 'path';
 import { AgentFlowSkill } from './index';
+
+// Get package directory
+const getPackageDir = () => {
+  return join(__dirname, '../');
+};
 
 const program = new Command();
 
@@ -17,6 +24,114 @@ program
   .name('agentflow')
   .description('AgentFlow - AI Agent Task Collaboration System')
   .version('1.0.0');
+
+// Initialize AgentFlow in current directory
+program
+  .command('init')
+  .description('Initialize AgentFlow in current directory')
+  .option('-f, --force', 'Overwrite existing .agentflow directory')
+  .action(async (options) => {
+    const agentflowDir = join(process.cwd(), '.agentflow');
+
+    if (existsSync(agentflowDir) && !options.force) {
+      console.log(chalk.yellow('.agentflow directory already exists'));
+      console.log(chalk.gray('Use --force to overwrite'));
+      process.exit(1);
+    }
+
+    const spinner = ora('Initializing AgentFlow...').start();
+
+    try {
+      // Create .agentflow directory structure
+      const dirs = ['agents', 'skills', 'workflows', 'examples', 'rules'];
+      for (const dir of dirs) {
+        mkdirSync(join(agentflowDir, dir), { recursive: true });
+      }
+
+      // Copy template files from package
+      const templateDir = join(getPackageDir(), 'templates');
+
+      if (existsSync(templateDir)) {
+        copyTemplateFiles(templateDir, agentflowDir);
+      } else {
+        // Create default files if templates don't exist
+        createDefaultFiles(agentflowDir);
+      }
+
+      spinner.succeed(chalk.green('AgentFlow initialized'));
+      console.log();
+      console.log(chalk.bold('Next steps:'));
+      console.log(chalk.gray('  1. Start Master server: cd nodejs && node packages/master/dist/index.js'));
+      console.log(chalk.gray('  2. Create task: agentflow create "My first task" -d "npm test"'));
+      console.log(chalk.gray('  3. Check status: agentflow list'));
+      console.log();
+      console.log(chalk.gray('See .agentflow/ directory for agents, skills, and workflows'));
+    } catch (error: any) {
+      spinner.fail(chalk.red(`Initialization failed: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// Update AgentFlow templates
+program
+  .command('update')
+  .description('Update AgentFlow templates to latest version')
+  .action(async () => {
+    const spinner = ora('Updating AgentFlow...').start();
+
+    try {
+      // TODO: Fetch latest templates from GitHub or npm
+      spinner.info(chalk.yellow('Update feature coming soon'));
+      console.log(chalk.gray('Manually update by reinstalling: npm install -g @agentflow/skill'));
+    } catch (error: any) {
+      spinner.fail(chalk.red(`Update failed: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// Check AgentFlow installation status
+program
+  .command('info')
+  .description('Check AgentFlow installation status')
+  .action(async () => {
+    console.log();
+    console.log(chalk.bold('AgentFlow Status'));
+    console.log(chalk.gray('─'.repeat(50)));
+
+    // Check .agentflow directory
+    const agentflowDir = join(process.cwd(), '.agentflow');
+    if (existsSync(agentflowDir)) {
+      console.log(chalk.green('✓') + ' .agentflow directory exists');
+
+      // List contents
+      const dirs = readdirSync(agentflowDir);
+      console.log(chalk.gray('  Contents:'), dirs.join(', '));
+    } else {
+      console.log(chalk.yellow('○') + ' .agentflow directory not found');
+      console.log(chalk.gray('  Run: agentflow init'));
+    }
+
+    // Check Master server
+    console.log();
+    const skill = new AgentFlowSkill();
+    const spinner = ora('Checking Master...').start();
+
+    try {
+      const isHealthy = await skill.checkHealth();
+      if (isHealthy) {
+        spinner.succeed(chalk.green('✓') + ' Master server is running');
+        console.log(chalk.gray(`  URL: ${skill['masterUrl']}`));
+      } else {
+        spinner.fail(chalk.red('✗') + ' Master server is not responding');
+        console.log(chalk.gray('  Start: cd nodejs && node packages/master/dist/index.js'));
+      }
+    } catch {
+      spinner.fail(chalk.red('✗') + ' Cannot connect to Master server');
+    }
+
+    console.log();
+    console.log(chalk.gray('Version: 1.0.0'));
+  });
 
 // Create task command
 program
@@ -210,6 +325,48 @@ program
       process.exit(1);
     }
   });
+
+// Helper functions
+function copyTemplateFiles(templateDir: string, targetDir: string) {
+  const files = ['README.md', 'config.example.json'];
+  for (const file of files) {
+    const src = join(templateDir, file);
+    const dest = join(targetDir, file);
+    if (existsSync(src)) {
+      copyFileSync(src, dest);
+    }
+  }
+}
+
+function createDefaultFiles(agentflowDir: string) {
+  // Create README
+  const readme = `# AgentFlow Configuration
+
+This directory contains your AgentFlow configuration.
+
+## Structure
+
+- \`agents/\` - Agent templates
+- \`skills/\` - Skill definitions
+- \`workflows/\` - Workflow templates
+- \`examples/\` - Usage examples
+- \`rules/\` - Workspace rules
+
+## Documentation
+
+See [AI Integration Guide](https://github.com/MoSiYuan/AgentFlow) for details.
+`;
+  require('fs').writeFileSync(join(agentflowDir, 'README.md'), readme);
+
+  // Create config example
+  const config = JSON.stringify({
+    version: '1.0.0',
+    master: { url: 'http://localhost:6767' },
+    workers: { default_group: 'default' },
+    tasks: { default_priority: 50, max_retries: 3 },
+  }, null, 2);
+  require('fs').writeFileSync(join(agentflowDir, 'config.example.json'), config);
+}
 
 // Parse and execute
 program.parse();

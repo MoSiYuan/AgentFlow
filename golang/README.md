@@ -30,13 +30,13 @@ ls -lh bin/
 # 应该看到: master, worker
 
 # 3. 启动 Master
-./bin/master --mode standalone --port 8848
+./bin/master --mode standalone --port 6767
 
 # 4. 启动 Worker（另一个终端）
-./bin/worker --mode standalone --master http://127.0.0.1:8848 --auto
+./bin/worker --mode standalone --master http://127.0.0.1:6767 --auto
 
 # 5. 创建任务
-curl -X POST http://127.0.0.1:8848/api/tasks/create \
+curl -X POST http://127.0.0.1:6767/api/tasks/create \
   -H "Content-Type: application/json" \
   -d '{"task_id": "T1", "title": "Test", "description": "shell:echo Hello", "priority": "high"}'
 ```
@@ -79,7 +79,7 @@ kubectl apply -f deployments/k8s/
 Flags:
   --mode string       # 部署模式: standalone/cloud (default "standalone")
   --host string       # 监听地址 (default "0.0.0.0")
-  -p, --port int      # 监听端口 (default 8848)
+  -p, --port int      # 监听端口 (default 6767)
   --auto-shutdown     # standalone 模式：任务完成后自动关闭
   -h, --help          # 帮助信息
 ```
@@ -91,7 +91,7 @@ Flags:
 
 Flags:
   --mode string       # 部署模式: standalone/cloud (default "standalone")
-  -m, --master string # Master URL (default "http://localhost:8848")
+  -m, --master string # Master URL (default "http://localhost:6767")
   -n, --name string   # Worker 名称 (default: hostname)
   -a, --auto          # 自动模式：自动拉取并执行任务
   --oneshot           # 执行一个任务后退出（standalone 模式）
@@ -109,7 +109,7 @@ services:
   master:
     image: agentflow:latest
     ports:
-      - "8848:8848"
+      - "6767:6767"
     command: ["./master", "--mode", "standalone", "--auto-shutdown"]
     restart: unless-stopped
 ```
@@ -123,7 +123,7 @@ services:
   master:
     image: agentflow:latest
     ports:
-      - "8848:8848"
+      - "6767:6767"
     command: ["./master", "--mode", "cloud"]
     restart: always
 
@@ -132,7 +132,7 @@ services:
     depends_on:
       - master
     environment:
-      - MASTER_URL=http://master:8848
+      - MASTER_URL=http://master:6767
     command: ["./worker", "--mode", "cloud", "--auto"]
     restart: always
     deploy:
@@ -216,10 +216,10 @@ make clean      # 清理编译文件
 
 ```bash
 # 查找占用进程
-lsof -i:8848
+lsof -i:6767
 
 # 杀掉进程
-kill -9 $(lsof -ti:8848)
+kill -9 $(lsof -ti:6767)
 
 # 或使用其他端口
 ./bin/master --port 8850
@@ -229,13 +229,13 @@ kill -9 $(lsof -ti:8848)
 
 ```bash
 # 1. 检查 Master 是否运行
-curl http://localhost:8848/api/health
+curl http://localhost:6767/api/health
 
 # 2. 检查网络
 ping localhost
 
 # 3. 使用 127.0.0.1 而非 localhost（IPv6 问题）
-./bin/worker --master http://127.0.0.1:8848
+./bin/worker --master http://127.0.0.1:6767
 ```
 
 ### 问题 3: Docker 容器无法启动

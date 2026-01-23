@@ -321,7 +321,7 @@ import "github.com/gin-gonic/gin"
 
 r := gin.Default()
 r.GET("/tasks", getTasks)
-r.Run(":8848")
+r.Run(":6767")
 ```
 
 **Node.js**：
@@ -331,7 +331,7 @@ import express from 'express';
 
 const app = express();
 app.get('/tasks', getTasks);
-app.listen(8848);
+app.listen(6767);
 ```
 
 **结论**：相当

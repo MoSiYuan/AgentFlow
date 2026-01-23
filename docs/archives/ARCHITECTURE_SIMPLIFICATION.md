@@ -67,7 +67,7 @@
 # 旧方式（已废弃）
 cd python
 pip install -r requirements.txt
-python -m agentflow.cli master --port 8848
+python -m agentflow.cli master --port 6767
 
 # 新方式（推荐）
 npm install -g agentflow

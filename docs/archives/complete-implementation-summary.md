@@ -147,7 +147,7 @@ node packages/worker/dist/index.js
 node packages/master/dist/index.js
 
 # 创建任务
-curl -X POST http://localhost:8848/api/v1/tasks \
+curl -X POST http://localhost:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "我的任务",

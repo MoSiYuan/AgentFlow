@@ -25,7 +25,7 @@ spec:
         args: ["worker"]
         env:
         - name: MASTER_URL
-          value: "http://agentflow-master.agentflow.svc.cluster.local:8848"
+          value: "http://agentflow-master.agentflow.svc.cluster.local:6767"
         - name: WORKER_GROUP
           value: "k8s"
         resources:

@@ -4,15 +4,24 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen.svg)](https://nodejs.org/)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8E.svg)](https://golang.org/)
 
+> **⚠️ Port Change**: Default port changed from `8848` to `6767` in v2.0.0. See [Migration Guide](PORT_MIGRATION_GUIDE.md) for details.
+
 Master-Worker architecture for asynchronous AI task collaboration with 100% API-compatible dual-language implementation.
 
 ## Quick Start
 
 ```bash
-# Install
+# Install AgentFlow
 npm install -g @agentflow/skill
 
-# Create task
+# Initialize project (creates .agentflow/ directory)
+agentflow init
+
+# Start Master server
+cd /path/to/AgentFlow/nodejs
+node packages/master/dist/index.js
+
+# Create your first task
 agentflow create "Run tests" -d "npm test"
 
 # List tasks
@@ -54,9 +63,23 @@ agentflow status TASK-00000001
 
 ## Usage
 
-### CLI
+### Initialize Project
 
 ```bash
+# Initialize AgentFlow in current directory
+agentflow init
+
+# Check installation status
+agentflow info
+
+# Update templates (coming soon)
+agentflow update
+```
+
+### Task Management
+
+```bash
+# Create tasks
 agentflow create "My Task" -d "Description"
 agentflow list --status pending
 agentflow exec "npm run build"
@@ -68,7 +91,7 @@ agentflow exec "npm run build"
 import { AgentFlowSkill } from '@agentflow/skill';
 
 const skill = new AgentFlowSkill({
-  master_url: 'http://localhost:8848'
+  master_url: 'http://localhost:6767'
 });
 
 // Create task
@@ -86,27 +109,39 @@ await skill.executeParallel([
 
 ## Documentation
 
-- [Skill Usage](docs/SKILL.md)
-- [API Reference](docs/API.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Getting Started](docs/GETTING_STARTED.md)
+- [Skill Usage](docs/SKILL.md) - Command reference
+- [AI Integration](docs/AI_INTEGRATION.md) - AI guide with examples
+- [Architecture](docs/ARCHITECTURE.md) - System design
+- [Deployment](deployment/) - Docker & Kubernetes deployment
+- [Project Config](.agentflow/) - Agent templates, skills, workflows
 
 ## Project Structure
 
 ```
 AgentFlow/
+├── .agentflow/          # Configuration & templates
+│   ├── agents/          # Agent templates (developer, tester, reviewer)
+│   ├── skills/          # Skill definitions (git, testing, etc.)
+│   ├── workflows/       # Workflow templates
+│   ├── examples/        # Usage examples
+│   └── rules/           # Workspace rules
+├── deployment/          # Docker & K8s deployment ⭐ NEW
+│   ├── nodejs/          # Node.js Docker configs
+│   ├── k8s/             # Kubernetes manifests
+│   └── obsolete/        # Old Go deployment configs
 ├── nodejs/              # Node.js implementation
 │   ├── packages/
 │   │   ├── master/      # Master server
 │   │   ├── worker/      # Worker (CLI execution)
 │   │   ├── database/    # SQLite database layer
 │   │   ├── shared/      # Type definitions
-│   │   ├── skill/       # CLI skill ⭐ NEW
+│   │   ├── skill/       # CLI skill
 │   │   └── cli/         # Main CLI
 │   └── test-*.js        # Integration tests
 ├── golang/              # Go implementation
 │   ├── master/          # Go Master server
 │   └── worker/          # Go Worker
+├── examples/            # Usage examples ⭐ NEW
 └── docs/                # Documentation
 ```
 
@@ -138,7 +173,7 @@ agentflow --help
 ## Environment Variables
 
 ```bash
-export AGENTFLOW_MASTER_URL="http://localhost:8848"
+export AGENTFLOW_MASTER_URL="http://localhost:6767"
 export AGENTFLOW_GROUP="default"
 export ANTHROPIC_API_KEY="sk-ant-..."  # For AI features
 ```

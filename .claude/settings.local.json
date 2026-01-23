@@ -59,7 +59,11 @@
       "Bash(npm run build:*)",
       "Bash(npx node-gyp rebuild:*)",
       "Bash(npm rebuild:*)",
-      "Bash(pnpm run build:*)"
+      "Bash(pnpm run build:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(ssh:*)",
+      "mcp__zread__get_repo_structure",
+      "mcp__zread__read_file"
     ]
   }
 }

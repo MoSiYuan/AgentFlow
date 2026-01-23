@@ -16,7 +16,7 @@ const { setTimeout: sleep } = require('timers/promises');
 const http = require('http');
 
 // Configuration
-const MASTER_PORT = 8848;
+const MASTER_PORT = 6767;
 const NUM_WORKERS = 3;
 const NUM_TASKS = 6;
 const TEST_DB = '.claude/cpds-manager/test-agentflow.db';

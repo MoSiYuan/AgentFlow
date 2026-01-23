@@ -373,7 +373,7 @@ agentflow-master start
 agentflow-worker --mode auto
 
 # 4. 创建任务
-curl -X POST http://127.0.0.1:8848/api/v1/tasks \
+curl -X POST http://127.0.0.1:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "编辑代码文件",
@@ -389,9 +389,9 @@ curl -X POST http://127.0.0.1:8848/api/v1/tasks \
 cat > config.yaml <<EOF
 master:
   host: "0.0.0.0"
-  port: 8848
+  port: 6767
 worker:
-  master_url: "http://master:8848"
+  master_url: "http://master:6767"
   group_name: "production"
 EOF
 
@@ -410,11 +410,11 @@ kubectl apply -f golang/deployments/
 
 ```bash
 # 本地：Python Master
-python -m agentflow.cli master --port 8848
+python -m agentflow.cli master --port 6767
 
 # 云端：Go Workers（连接到本地 Master）
 ./golang/bin/worker \
-  -master https://your-local-ip:8848 \
+  -master https://your-local-ip:6767 \
   -group cloud-workers
 ```
 
@@ -515,7 +515,7 @@ AgentFlow/
 ```python
 from agentflow import Master, Worker
 
-master = Master(port=8848)
+master = Master(port=6767)
 worker = Worker(mode="auto")
 
 # 创建重构任务
@@ -538,7 +538,7 @@ master.create_task(
 # 使用 Go 版本进行云端批量处理
 # 1. 准备 1000 个文件处理任务
 for i in {1..1000}; do
-  curl -X POST http://cloud-master:8848/api/v1/tasks \
+  curl -X POST http://cloud-master:6767/api/v1/tasks \
     -H "Content-Type: application/json" \
     -d "{
       \"title\": \"处理文件 $i\",

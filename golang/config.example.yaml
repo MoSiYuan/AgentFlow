@@ -3,13 +3,13 @@
 
 master:
   host: "0.0.0.0"        # Master server host
-  port: 8848              # Master server port
+  port: 6767              # Master server port
   db_path: ".claude/cpds-manager/agentflow.db"
   auto_start: false       # Auto-start local workers
 
 worker:
   id: ""                  # Worker ID (auto-generated if empty)
-  master_url: "http://localhost:8848"
+  master_url: "http://localhost:6767"
   db_path: ".claude/cpds-manager/agentflow.db"
   group_name: "default"   # Worker group name
   mode: "auto"            # Worker mode: auto, oneshot, manual

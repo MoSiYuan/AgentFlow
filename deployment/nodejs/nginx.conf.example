@@ -1,0 +1,33 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream agentflow_master {
+        server master:8848;
+    }
+
+    server {
+        listen 80;
+        server_name localhost;
+
+        # API proxy
+        location /api/ {
+            proxy_pass http://agentflow_master;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        # Health check
+        location /health {
+            proxy_pass http://agentflow_master/health;
+        }
+
+        # Static files (if you add a web UI later)
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
+    }
+}

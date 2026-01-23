@@ -1,0 +1,50 @@
+{
+  "$schema": "./schema.json",
+  "version": "1.0.0",
+  "project": {
+    "name": "my-agentflow-project",
+    "description": "AgentFlow-powered AI agent collaboration",
+    "version": "1.0.0"
+  },
+  "master": {
+    "url": "http://localhost:6767",
+    "health_check_interval": 30000,
+    "auto_restart": true
+  },
+  "workers": {
+    "default_group": "default",
+    "max_workers": 5,
+    "worker_timeout": 300000,
+    "heartbeat_interval": 10000
+  },
+  "tasks": {
+    "default_priority": 50,
+    "max_retries": 3,
+    "retry_backoff": 2000,
+    "checkpoint_interval": 60000
+  },
+  "git": {
+    "enabled": true,
+    "lock_timeout": 1800000,
+    "auto_cleanup": true
+  },
+  "memory": {
+    "short_term_ttl": 3600,
+    "max_entries": 100
+  },
+  "agents": {
+    "templates": [
+      "developer",
+      "tester",
+      "reviewer"
+    ],
+    "default_agent": "developer"
+  },
+  "skills": {
+    "enabled": [
+      "git-operations",
+      "testing"
+    ],
+    "auto_load": true
+  }
+}

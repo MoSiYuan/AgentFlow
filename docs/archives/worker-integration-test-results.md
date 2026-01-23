@@ -241,7 +241,7 @@ execAsync('/commit -m "message"');
 
 ```bash
 # 1. 简单 shell 命令
-curl -X POST http://localhost:8848/api/v1/tasks \
+curl -X POST http://localhost:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "List files",
@@ -250,7 +250,7 @@ curl -X POST http://localhost:8848/api/v1/tasks \
   }'
 
 # 2. Git commit
-curl -X POST http://localhost:8848/api/v1/tasks \
+curl -X POST http://localhost:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Commit changes",
@@ -259,7 +259,7 @@ curl -X POST http://localhost:8848/api/v1/tasks \
   }'
 
 # 3. 运行测试
-curl -X POST http://localhost:8848/api/v1/tasks \
+curl -X POST http://localhost:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Run tests",
@@ -268,7 +268,7 @@ curl -X POST http://localhost:8848/api/v1/tasks \
   }'
 
 # 4. 复杂任务（会使用 Claude CLI）
-curl -X POST http://localhost:8848/api/v1/tasks \
+curl -X POST http://localhost:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "代码分析",

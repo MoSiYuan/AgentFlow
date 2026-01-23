@@ -44,7 +44,7 @@ async function testWorkerExecution() {
 
   // 创建 Worker 实例（不需要 Master）
   const workerConfig = {
-    master_url: 'http://localhost:8848', // 不会真正连接
+    master_url: 'http://localhost:6767', // 不会真正连接
     id: 'test-worker-1',
     group_name: 'test',
     mode: 'oneshot',
@@ -187,7 +187,7 @@ async function testClaudeCLIDetection() {
   log(colors.cyan, '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   const workerConfig = {
-    master_url: 'http://localhost:8848',
+    master_url: 'http://localhost:6767',
     id: 'test-worker-claude',
     group_name: 'test',
     mode: 'oneshot',
@@ -223,7 +223,7 @@ async function testSkillParsing() {
   log(colors.cyan, '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   const workerConfig = {
-    master_url: 'http://localhost:8848',
+    master_url: 'http://localhost:6767',
     id: 'test-worker-skills',
     group_name: 'test',
     mode: 'oneshot',

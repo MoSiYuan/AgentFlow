@@ -35,7 +35,7 @@ function httpRequest(method, path, data = null) {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'localhost',
-      port: 8848,
+      port: 6767,
       path: path,
       method: method,
       headers: { 'Content-Type': 'application/json' },

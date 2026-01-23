@@ -110,10 +110,10 @@ go build -o bin/worker cmd/worker/main.go
 
 ```bash
 # 启动 Master
-./bin/master --mode standalone --port 8848
+./bin/master --mode standalone --port 6767
 
 # 启动 Worker
-./bin/worker --mode standalone --master http://127.0.0.1:8848 --auto
+./bin/worker --mode standalone --master http://127.0.0.1:6767 --auto
 ```
 
 ## 📝 开发规范

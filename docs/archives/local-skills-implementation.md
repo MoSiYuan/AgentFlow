@@ -323,7 +323,7 @@ Worker 可以执行:
 
 ```bash
 # 简单 shell 命令
-curl -X POST http://localhost:8848/api/v1/tasks \
+curl -X POST http://localhost:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "List files",
@@ -332,7 +332,7 @@ curl -X POST http://localhost:8848/api/v1/tasks \
   }'
 
 # Git commit
-curl -X POST http://localhost:8848/api/v1/tasks \
+curl -X POST http://localhost:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Commit changes",
@@ -341,7 +341,7 @@ curl -X POST http://localhost:8848/api/v1/tasks \
   }'
 
 # 复杂任务（会使用 Claude CLI）
-curl -X POST http://localhost:8848/api/v1/tasks \
+curl -X POST http://localhost:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "分析代码",

@@ -4,7 +4,7 @@
 
 **Port Change (v2.0.0)**: Default port changed from `8848` to `6767`.
 - [Migration Guide](../PORT_MIGRATION_GUIDE.md) - How to update your configuration
-- [Port Change Summary](../PORT_CHANGE.md) - Technical details
+- [Changelog](../CHANGELOG.md) - Complete version history
 
 ## Core Documentation
 
@@ -12,6 +12,7 @@
 - [Skill Usage](SKILL.md) - Command reference and API
 - [AI Integration](AI_INTEGRATION.md) - AI guide with examples ⭐
 - [Architecture](ARCHITECTURE.md) - System design and components
+- [Deployment](../deployment/) - Docker & K8s deployment
 
 ## Quick Start
 

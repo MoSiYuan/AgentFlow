@@ -109,6 +109,7 @@ await skill.executeParallel([
 
 ## Documentation
 
+- [Changelog](CHANGELOG.md) - Version history and changes
 - [Skill Usage](docs/SKILL.md) - Command reference
 - [AI Integration](docs/AI_INTEGRATION.md) - AI guide with examples
 - [Architecture](docs/ARCHITECTURE.md) - System design

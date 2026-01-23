@@ -1,0 +1,537 @@
+/**
+ * AgentFlow Database Layer
+ *
+ * Provides SQLite database operations for AgentFlow.
+ * Compatible with Python and Go versions.
+ */
+
+import Database from 'better-sqlite3';
+import { path } from 'path';
+import { fs } from 'fs';
+import type {
+  Task,
+  Worker,
+  TaskStatus,
+  SystemStats,
+  GroupStats,
+  TaskFilter,
+  WorkerRegistration,
+  TaskResult,
+} from '@agentflow/shared';
+
+export class AgentFlowDatabase {
+  private db: Database.Database;
+  private dbPath: string;
+
+  constructor(dbPath: string = '.claude/cpds-manager/agentflow.db') {
+    this.dbPath = dbPath;
+    this.db = new Database(dbPath);
+    this.db.pragma('journal_mode = WAL');
+    this.db.pragma('foreign_keys = ON');
+  }
+
+  /**
+   * Initialize database schema
+   */
+  init(): void {
+    this.exec(`
+      -- Tasks table
+      CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parent_id INTEGER DEFAULT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        group_name TEXT NOT NULL DEFAULT 'default',
+        completion_criteria TEXT,
+        status TEXT NOT NULL DEFAULT 'pending'
+          CHECK(status IN ('pending', 'running', 'completed', 'failed', 'blocked')),
+        priority INTEGER DEFAULT 0,
+        lock_holder TEXT,
+        lock_time DATETIME,
+        result TEXT,
+        error TEXT,
+        workspace_dir TEXT,
+        sandboxed INTEGER DEFAULT 0,
+        allow_network INTEGER DEFAULT 1,
+        max_memory TEXT DEFAULT '512M',
+        max_cpu INTEGER DEFAULT 1,
+        created_by TEXT,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        started_at DATETIME,
+        completed_at DATETIME,
+        FOREIGN KEY (parent_id) REFERENCES tasks(id) ON DELETE CASCADE
+      );
+
+      -- Workers table
+      CREATE TABLE IF NOT EXISTS workers (
+        id TEXT PRIMARY KEY,
+        group_name TEXT NOT NULL DEFAULT 'default',
+        type TEXT NOT NULL CHECK(type IN ('local', 'remote')),
+        capabilities TEXT,
+        status TEXT NOT NULL DEFAULT 'active'
+          CHECK(status IN ('active', 'inactive')),
+        last_heartbeat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Task logs table
+      CREATE TABLE IF NOT EXISTS task_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id INTEGER NOT NULL,
+        worker_id TEXT NOT NULL,
+        log_level TEXT NOT NULL CHECK(log_level IN ('info', 'warning', 'error')),
+        message TEXT NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+      );
+
+      -- Git tasks table
+      CREATE TABLE IF NOT EXISTS git_tasks (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        description TEXT,
+        agent_id TEXT,
+        git_branch TEXT NOT NULL UNIQUE,
+        file_boundaries TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        assigned_at DATETIME,
+        completed_at DATETIME
+      );
+
+      -- Git locks table
+      CREATE TABLE IF NOT EXISTS git_locks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id TEXT NOT NULL,
+        agent_id TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        lock_type TEXT NOT NULL,
+        acquired_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        released_at DATETIME,
+        status TEXT DEFAULT 'active',
+        FOREIGN KEY (task_id) REFERENCES git_tasks(id) ON DELETE CASCADE
+      );
+
+      -- Git conflicts table
+      CREATE TABLE IF NOT EXISTS git_conflicts (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        agent_id TEXT NOT NULL,
+        conflict_type TEXT NOT NULL,
+        file_paths TEXT,
+        description TEXT,
+        severity TEXT DEFAULT 'medium',
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        resolved_at DATETIME,
+        resolved_by TEXT,
+        resolution TEXT,
+        FOREIGN KEY (task_id) REFERENCES git_tasks(id) ON DELETE CASCADE
+      );
+    `);
+
+    // Create indexes
+    this.exec(`
+      CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+      CREATE INDEX IF NOT EXISTS idx_tasks_group ON tasks(group_name);
+      CREATE INDEX IF NOT EXISTS idx_tasks_lock ON tasks(lock_holder, lock_time);
+      CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_id);
+      CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority DESC);
+      CREATE INDEX IF NOT EXISTS idx_workers_group ON workers(group_name);
+      CREATE INDEX IF NOT EXISTS idx_workers_status ON workers(status);
+      CREATE INDEX IF NOT EXISTS idx_task_logs_task ON task_logs(task_id);
+      CREATE INDEX IF NOT EXISTS idx_git_tasks_status ON git_tasks(status);
+      CREATE INDEX IF NOT EXISTS idx_git_locks_file ON git_locks(file_path);
+      CREATE INDEX IF NOT EXISTS idx_git_locks_status ON git_locks(status);
+      CREATE INDEX IF NOT EXISTS idx_git_conflicts_status ON git_conflicts(status);
+    `);
+  }
+
+  /**
+   * Execute SQL statement
+   */
+  private exec(sql: string): void {
+    this.db.exec(sql);
+  }
+
+  /**
+   * Create a new task
+   */
+  createTask(data: {
+    parent_id?: number;
+    title: string;
+    description: string;
+    group_name?: string;
+    completion_criteria?: string;
+    priority?: number;
+    workspace_dir?: string;
+    sandboxed?: boolean;
+    allow_network?: boolean;
+    max_memory?: string;
+    max_cpu?: number;
+    created_by?: string;
+  }): string {
+    const stmt = this.db.prepare(`
+      INSERT INTO tasks (
+        parent_id, title, description, group_name, completion_criteria,
+        priority, workspace_dir, sandboxed, allow_network, max_memory, max_cpu, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const result = stmt.run(
+      data.parent_id || null,
+      data.title,
+      data.description,
+      data.group_name || 'default',
+      data.completion_criteria || null,
+      data.priority || 0,
+      data.workspace_dir || null,
+      data.sandboxed ? 1 : 0,
+      data.allow_network ? 1 : 0,
+      data.max_memory || '512M',
+      data.max_cpu || 1,
+      data.created_by || null
+    );
+
+    return `TASK-${String(result.lastInsertRowid).padStart(8, '0').toUpperCase()}`;
+  }
+
+  /**
+   * Get task by ID
+   */
+  getTask(id: string): Task | null {
+    const stmt = this.db.prepare('SELECT * FROM tasks WHERE id = ?');
+    const row = stmt.get(id) as any;
+    if (!row) return null;
+
+    return this.mapTask(row);
+  }
+
+  /**
+   * List tasks with optional filters
+   */
+  listTasks(filter?: TaskFilter): Task[] {
+    let sql = 'SELECT * FROM tasks WHERE 1=1';
+    const params: any[] = [];
+
+    if (filter?.status) {
+      sql += ' AND status = ?';
+      params.push(filter.status);
+    }
+
+    if (filter?.group_name) {
+      sql += ' AND group_name = ?';
+      params.push(filter.group_name);
+    }
+
+    if (filter?.parent_id) {
+      sql += ' AND parent_id = ?';
+      params.push(filter.parent_id);
+    }
+
+    sql += ' ORDER BY created_at DESC';
+
+    if (filter?.limit) {
+      sql += ' LIMIT ?';
+      params.push(filter.limit);
+    }
+
+    if (filter?.offset) {
+      sql += ' OFFSET ?';
+      params.push(filter.offset);
+    }
+
+    const stmt = this.db.prepare(sql);
+    const rows = stmt.all(...params) as any[];
+
+    return rows.map(row => this.mapTask(row));
+  }
+
+  /**
+   * Update task status
+   */
+  updateTaskStatus(
+    id: string,
+    status: TaskStatus,
+    workerId?: string
+  ): boolean {
+    let sql = 'UPDATE tasks SET status = ?';
+    const params: any[] = [status];
+
+    if (status === 'running') {
+      sql += ', started_at = CURRENT_TIMESTAMP';
+    } else if (status === 'completed' || status === 'failed') {
+      sql += ', completed_at = CURRENT_TIMESTAMP';
+    }
+
+    if (workerId) {
+      sql += ', lock_holder = ?, lock_time = CURRENT_TIMESTAMP';
+      params.push(workerId);
+    }
+
+    sql += ' WHERE id = ?';
+    params.push(id);
+
+    const stmt = this.db.prepare(sql);
+    const result = stmt.run(...params);
+    return result.changes > 0;
+  }
+
+  /**
+   * Complete task
+   */
+  completeTask(id: string, workerId: string, result: string): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE tasks
+      SET status = 'completed',
+          result = ?,
+          lock_holder = NULL,
+          completed_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND lock_holder = ?
+    `);
+
+    const updateResult = stmt.run(result, id, workerId);
+    return updateResult.changes > 0;
+  }
+
+  /**
+   * Fail task
+   */
+  failTask(id: string, workerId: string, error: string): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE tasks
+      SET status = 'failed',
+          error = ?,
+          lock_holder = NULL,
+          completed_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND lock_holder = ?
+    `);
+
+    const result = stmt.run(error, id, workerId);
+    return result.changes > 0;
+  }
+
+  /**
+   * Lock task for worker
+   */
+  lockTask(id: string, workerId: string): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE tasks
+      SET status = 'running',
+          lock_holder = ?,
+          lock_time = CURRENT_TIMESTAMP,
+          started_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND lock_holder IS NULL
+    `);
+
+    const result = stmt.run(workerId, id);
+    return result.changes > 0;
+  }
+
+  /**
+   * Unlock task
+   */
+  unlockTask(id: string, workerId: string): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE tasks
+      SET lock_holder = NULL,
+          lock_time = NULL,
+          status = 'pending'
+      WHERE id = ? AND lock_holder = ?
+    `);
+
+    const result = stmt.run(id, workerId);
+    return result.changes > 0;
+  }
+
+  /**
+   * Register worker
+   */
+  registerWorker(data: WorkerRegistration): boolean {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO workers (id, group_name, type, capabilities, status)
+      VALUES (?, ?, ?, ?, 'active')
+    `);
+
+    try {
+      stmt.run(
+        data.worker_id || this.generateWorkerId(),
+        data.group_name,
+        'local',
+        JSON.stringify(data.capabilities)
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Update worker heartbeat
+   */
+  updateWorkerHeartbeat(id: string): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE workers
+      SET last_heartbeat = CURRENT_TIMESTAMP, status = 'active'
+      WHERE id = ?
+    `);
+
+    const result = stmt.run(id);
+    return result.changes > 0;
+  }
+
+  /**
+   * List workers
+   */
+  listWorkers(group?: string): Worker[] {
+    let sql = 'SELECT * FROM workers WHERE status = "active"';
+    const params: any[] = [];
+
+    if (group) {
+      sql += ' AND group_name = ?';
+      params.push(group);
+    }
+
+    sql += ' ORDER BY last_heartbeat DESC';
+
+    const stmt = this.db.prepare(sql);
+    const rows = stmt.all(...params) as any[];
+
+    return rows.map(row => ({
+      id: row.id,
+      group_name: row.group_name,
+      type: row.type,
+      capabilities: JSON.parse(row.capabilities || '[]'),
+      status: row.status,
+      last_heartbeat: new Date(row.last_heartbeat),
+      created_at: new Date(row.created_at),
+    }));
+  }
+
+  /**
+   * Cleanup offline workers
+   */
+  cleanupOfflineWorkers(timeoutSeconds: number = 120): number {
+    const stmt = this.db.prepare(`
+      UPDATE workers
+      SET status = 'inactive'
+      WHERE status = 'active'
+        AND datetime(last_heartbeat, '+' || ? || ' seconds') < datetime('now')
+    `);
+
+    const result = stmt.run(timeoutSeconds);
+    return result.changes;
+  }
+
+  /**
+   * Get system statistics
+   */
+  getStats(): SystemStats {
+    const stmt = this.db.prepare(`
+      SELECT
+        COUNT(*) as total_tasks,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_tasks,
+        SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) as running_tasks,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_tasks,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_tasks
+      FROM tasks
+    `);
+
+    const taskStats = stmt.get() as any;
+
+    const workerStmt = this.db.prepare(`
+      SELECT
+        COUNT(*) as total_workers,
+        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_workers
+      FROM workers
+    `);
+
+    const workerStats = workerStmt.get() as any;
+
+    return {
+      total_tasks: taskStats.total_tasks,
+      pending_tasks: taskStats.pending_tasks,
+      running_tasks: taskStats.running_tasks,
+      completed_tasks: taskStats.completed_tasks,
+      failed_tasks: taskStats.failed_tasks,
+      total_workers: workerStats.total_workers,
+      active_workers: workerStats.active_workers,
+      uptime_seconds: 0, // To be set by caller
+    };
+  }
+
+  /**
+   * Get group statistics
+   */
+  getGroupStats(): GroupStats[] {
+    const stmt = this.db.prepare(`
+      SELECT
+        group_name,
+        COUNT(*) as total_tasks,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_tasks,
+        SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) as running_tasks,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_tasks,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_tasks
+      FROM tasks
+      GROUP BY group_name
+    `);
+
+    const rows = stmt.all() as any[];
+    return rows.map(row => ({
+      group_name: row.group_name,
+      total_tasks: row.total_tasks,
+      pending_tasks: row.pending_tasks,
+      running_tasks: row.running_tasks,
+      completed_tasks: row.completed_tasks,
+      failed_tasks: row.failed_tasks,
+    }));
+  }
+
+  /**
+   * Close database connection
+   */
+  close(): void {
+    this.db.close();
+  }
+
+  /**
+   * Map database row to Task object
+   */
+  private mapTask(row: any): Task {
+    return {
+      id: row.id,
+      parent_id: row.parent_id || undefined,
+      title: row.title,
+      description: row.description,
+      group_name: row.group_name,
+      completion_criteria: row.completion_criteria || undefined,
+      status: row.status,
+      priority: row.priority === 2 ? 'high' : row.priority === 1 ? 'medium' : 'low',
+      lock_holder: row.lock_holder || undefined,
+      lock_time: row.lock_time ? new Date(row.lock_time) : undefined,
+      result: row.result || undefined,
+      error: row.error || undefined,
+      workspace_dir: row.workspace_dir || undefined,
+      sandboxed: row.sandboxed === 1,
+      allow_network: row.allow_network === 1,
+      max_memory: row.max_memory,
+      max_cpu: row.max_cpu,
+      created_by: row.created_by || undefined,
+      created_at: new Date(row.created_at),
+      started_at: row.started_at ? new Date(row.started_at) : undefined,
+      completed_at: row.completed_at ? new Date(row.completed_at) : undefined,
+    };
+  }
+
+  /**
+   * Generate unique worker ID
+   */
+  private generateWorkerId(): string {
+    const os = require('os');
+    const pid = process.pid;
+    const random = Math.random().toString(36).substring(2, 8);
+    return `worker-${os.hostname()}-${pid}-${random}`;
+  }
+}
+
+export default AgentFlowDatabase;

@@ -1,0 +1,42 @@
+{
+  "name": "agentflow-monorepo",
+  "version": "1.0.0",
+  "description": "AgentFlow - AI Agent Task Collaboration System (Node.js Version)",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "master": "node packages/master/dist/index.js",
+    "worker": "node packages/worker/dist/index.js",
+    "cli": "node packages/cli/dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "turbo": "^1.11.3",
+    "typescript": "^5.3.3",
+    "prettier": "^3.2.4",
+    "eslint": "^8.56.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "agentflow",
+    "ai",
+    "agent",
+    "task",
+    "collaboration",
+    "claude",
+    "anthropic"
+  ],
+  "author": "AgentFlow Team",
+  "license": "MIT"
+}

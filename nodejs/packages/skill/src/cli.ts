@@ -489,16 +489,6 @@ program
     }
   });
 
-      // Cleanup
-      try {
-        masterProcess.kill();
-        workerProcess.kill();
-      } catch {}
-
-      process.exit(1);
-    }
-  });
-
 // Create workflow
 program
   .command('workflow')

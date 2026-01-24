@@ -1,223 +1,272 @@
 # AgentFlow - AI Agent Task Collaboration System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen.svg)](https://nodejs.org/)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8E.svg)](https://golang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-brightgreen.svg)](https://nodejs.org/)
 
-> **⚠️ Port Change**: Default port changed from `8848` to `6767` in v2.0.0. See [Migration Guide](PORT_MIGRATION_GUIDE.md) for details.
->
-> **⚠️ Node.js Compatibility**: Node.js v24 有已知兼容性问题。推荐使用 Node.js 18-20 LTS 版本。
+**Master-Worker architecture for asynchronous AI task collaboration with 100% API-compatible dual-language implementation.**
 
-Master-Worker architecture for asynchronous AI task collaboration with 100% API-compatible dual-language implementation.
+## 🚀 Quick Start
 
-## Quick Start
-
-```bash
-# Install AgentFlow
-npm install -g @agentflow/skill
-
-# Initialize project (creates .agentflow/ directory)
-agentflow init
-
-# Start Master server
-cd /path/to/AgentFlow/nodejs
-node packages/master/dist/index.js
-
-# Create your first task
-agentflow create "Run tests" -d "npm test"
-
-# List tasks
-agentflow list
-
-# Check status
-agentflow status TASK-00000001
-```
-
-## Features
-
-- ✅ **Task Orchestration** - DAG, parallel, sequential workflows
-- ✅ **Checkpoint Mechanism** - State persistence and recovery
-- ✅ **Git Locks** - Prevent concurrent conflicts
-- ✅ **Task Versioning** - Upgrade and history tracking
-- ✅ **Local CLI Execution** - Direct command execution
-- ✅ **Short-term Memory** - Agent context management
-
-## Architecture
-
-```
-┌─────────────┐
-│   Master    │ Task Scheduler
-│  (Node.js)  │ HTTP API + WebSocket
-└─────┬───────┘
-      │
-      ├──▶ ┌─────────────┐
-      │    │   Worker 1  │ Local CLI
-      │    │  (Node.js)  │ Skills Execution
-      │    └─────────────┘
-      │
-      ├──▶ ┌─────────────┐
-      │    │   Worker 2  │ Cloud SDK
-      │    │  (Node.js)  │ AI Processing
-      │    └─────────────┘
-      │
-      └──▶ ...
-```
-
-## Usage
-
-### Initialize Project
+### Option 1: Go Version (Recommended - Zero Dependencies) ⭐
 
 ```bash
-# Initialize AgentFlow in current directory
-agentflow init
+# Clone repository
+git clone https://github.com/MoSiYuan/AgentFlow.git
+cd AgentFlow
 
-# Check installation status
-agentflow info
+# Use immediately (no installation needed)
+./agentflow-go.sh run '["echo hello","echo world"]'
 
-# Update templates (coming soon)
-agentflow update
+# Output:
+# ✓ 准备执行 2 个任务
+# ✓ [1/2] 执行: echo hello
+# hello
+# ✓ [1/2] ✓ 成功
+# ✓ [2/2] 执行: echo world
+# world
+# ✓ [2/2] ✓ 成功
+# ✓ 执行完成: 2/2 成功, 0 失败
 ```
 
-### Task Management
+**Features:**
+- ✅ Zero dependencies (no Node.js, Python, etc.)
+- ✅ Download and use, 30 seconds to start
+- ✅ Single binary file (13-16MB)
+- ✅ Supports macOS, Linux, Windows
+- ✅ 100% API-compatible with Node.js version
+
+### Option 2: Node.js Version (Latest: v20 LTS)
 
 ```bash
-# Create tasks
-agentflow create "My Task" -d "Description"
-agentflow list --status pending
-agentflow exec "npm run build"
+# Navigate to Node.js directory
+cd nodejs
+
+# Set Node.js 20 environment
+export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
+
+# Install dependencies
+pnpm install
+
+# Build all packages
+pnpm run build
+
+# Start Master
+node packages/master/dist/index.js --port 6767 --db data/agentflow.db
+
+# Start Worker (another terminal)
+node packages/worker/dist/index.js
+
+# Create task
+curl -X POST http://localhost:6767/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Test Task",
+    "description": "echo Hello from Node.js 20!",
+    "group_name": "default"
+  }'
 ```
 
-### Programmatic
+### Option 3: Simple CLI (One-Line Execution) ✨
 
-```typescript
-import { AgentFlowSkill } from '@agentflow/skill';
+```bash
+# Execute tasks in one command
+node nodejs/packages/cli/dist/index.js run "echo Hello AgentFlow!"
 
-const skill = new AgentFlowSkill({
-  master_url: 'http://localhost:6767'
-});
+# With custom title
+node nodejs/packages/cli/dist/index.js run "npm test" --title "Run Tests"
 
-// Create task
-const taskId = await skill.createTask({
-  title: 'Deploy',
-  description: 'Build and deploy app'
-});
-
-// Parallel execution
-await skill.executeParallel([
-  { title: 'Test', description: 'npm test' },
-  { title: 'Lint', description: 'npm run lint' }
-]);
+# Keep services running
+node nodejs/packages/cli/dist/index.js run "echo test" --no-shutdown
 ```
 
-## Documentation
-
-- [Changelog](CHANGELOG.md) - Version history and changes
-- [Skill Usage](docs/SKILL.md) - Command reference
-- [AI Integration](docs/AI_INTEGRATION.md) - AI guide with examples
-- [Architecture](docs/ARCHITECTURE.md) - System design
-- [Deployment](deployment/) - Docker & Kubernetes deployment
-- [Project Config](.agentflow/) - Agent templates, skills, workflows
-
-## Project Structure
+## 📦 Architecture
 
 ```
 AgentFlow/
-├── .agentflow/          # Configuration & templates
-│   ├── agents/          # Agent templates (developer, tester, reviewer)
-│   ├── skills/          # Skill definitions (git, testing, etc.)
-│   ├── workflows/       # Workflow templates
-│   ├── examples/        # Usage examples
-│   └── rules/           # Workspace rules
-├── deployment/          # Docker & K8s deployment ⭐ NEW
-│   ├── nodejs/          # Node.js Docker configs
-│   ├── k8s/             # Kubernetes manifests
-│   └── obsolete/        # Old Go deployment configs
-├── nodejs/              # Node.js implementation
+├── cmd/                    # Go implementation
+│   ├── agentflow-master/   # Master server (Go)
+│   └── agentflow-worker/   # Worker (Go)
+├── nodejs/                 # Node.js implementation
 │   ├── packages/
-│   │   ├── master/      # Master server
-│   │   ├── worker/      # Worker (CLI execution)
-│   │   ├── database/    # SQLite database layer
-│   │   ├── shared/      # Type definitions
-│   │   ├── skill/       # CLI skill
-│   │   └── cli/         # Main CLI
-│   └── test-*.js        # Integration tests
-├── golang/              # Go implementation
-│   ├── master/          # Go Master server
-│   └── worker/          # Go Worker
-├── examples/            # Usage examples ⭐ NEW
-└── docs/                # Documentation
+│   │   ├── master/        # Master server (Node.js)
+│   │   ├── worker/        # Worker (Node.js)
+│   │   ├── local-executor/# Automatic management
+│   │   ├── cli/           # Command-line tool
+│   │   ├── database/      # SQLite database
+│   │   ├── shared/        # Shared types
+│   │   └── skill/         # Task management API
+│   └── package.json
+├── deployment/             # Deployment scripts
+├── examples/               # Usage examples
+└── docs/                  # Documentation
+    ├── archive/           # Archived reports
+    └── ...
 ```
 
-## Installation
+## 🎯 Features
 
-### From Source
+### Core Capabilities
 
-```bash
-# Node.js version
-cd nodejs
-npm install
-npm run build
-npm link
+- ✅ **Task Orchestration**: DAG-based task dependency resolution
+- ✅ **Parallel Execution**: Multi-worker concurrent task processing
+- ✅ **API Compatible**: 100% compatible between Go and Node.js versions
+- ✅ **Claude CLI Integration**: Automatic use of Claude CLI for complex tasks
+- ✅ **Checkpoint Support**: Task state saving and recovery
+- ✅ **WebSocket Support**: Real-time task status updates
+- ✅ **SQLite Database**: Persistent task storage
+- ✅ **RESTful API**: Standard HTTP API for task management
 
-# Go version
-cd golang
-make build
-make install
+### Task Execution Flow
+
+```
+┌─────────────┐
+│   Client    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────┐
+│  Master Server  │
+│  (Port 6767)    │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Task Queue     │
+│  (SQLite DB)    │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    ▼         ▼
+┌────────┐ ┌────────┐
+│Worker 1│ │Worker 2│  ...
+└────────┘ └────────┘
 ```
 
-### Using Skill Package
+## 📚 Documentation
+
+### Core Documentation
+
+- **[CLI Guide](AGENTFLOW_CLI_GUIDE.md)** - Command-line interface usage
+- **[Go Version Guide](docs/GO_VERSION_GUIDE.md)** - Go implementation details
+- **[Node.js Guide](docs/NODEJS_GUIDE.md)** - Node.js implementation details
+
+### Archived Reports
+
+Historical development and testing reports are available in [docs/archive/](docs/archive/).
+
+## 🔧 System Requirements
+
+### Go Version
+- **OS**: macOS, Linux, Windows
+- **Dependencies**: None (zero-deployment)
+
+### Node.js Version
+- **Node.js**: v20.19.6 LTS
+- **pnpm**: v10.28.1+
+- **better-sqlite3**: v12.6.2
+- **OS**: macOS, Linux, Windows
+
+## 🚦 Quick Reference
+
+### Go Version Commands
 
 ```bash
-cd nodejs/packages/skill
-npm link
-agentflow --help
-```
+# Run tasks directly
+./agentflow-go.sh run '["echo hello","echo world"]'
 
-## Environment Variables
-
-```bash
-export AGENTFLOW_MASTER_URL="http://localhost:6767"
-export AGENTFLOW_GROUP="default"
-export ANTHROPIC_API_KEY="sk-ant-..."  # For AI features
-```
-
-## Development
-
-```bash
-# Install dependencies
-cd nodejs && pnpm install
-
-# Build all packages
-npm run build
-
-# Run tests
-npm test
-
-# Start Master
-node packages/master/dist/index.js
+# Start Master server
+./agentflow-master-darwin-arm64 --port 6767 --db data/agentflow.db
 
 # Start Worker
-node packages/worker/dist/index.js
+./agentflow-worker-darwin-arm64 --master http://localhost:6767
 ```
 
-## Contributing
+### Node.js Version Commands
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+```bash
+# Start Master
+export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
+node nodejs/packages/master/dist/index.js --port 6767
 
-## License
+# Start Worker
+node nodejs/packages/worker/dist/index.js
+
+# Execute with CLI
+node nodejs/packages/cli/dist/index.js run "echo hello"
+
+# LocalExecutor (programmatic)
+node -e "
+const { LocalExecutor } = require('./nodejs/packages/local-executor/dist/index.js');
+const executor = new LocalExecutor({
+  masterPath: './nodejs/packages/master/dist/index.js',
+  masterPort: 6767,
+  dbPath: './data/agentflow.db',
+  shutdownOnComplete: true
+});
+executor.executeOne('My Task', 'echo Hello World');
+"
+```
+
+## 🔄 Version Comparison
+
+| Feature | Go Version | Node.js Version |
+|---------|-----------|----------------|
+| **Dependencies** | None | Node.js 20 + pnpm |
+| **Binary Size** | 13-16 MB | N/A (interpreted) |
+| **Startup Time** | <100ms | ~1s |
+| **Memory Usage** | ~20MB | ~80MB |
+| **Platform Support** | All platforms | Node.js 18-20 |
+| **Deployment** | Zero-dep | Requires Node.js 20 |
+| **Performance** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **Ease of Debug** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Development** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+
+## 🐛 Bug Fixes
+
+### Latest Fixes (Node.js v20)
+
+1. ✅ **Worker JSON Parse Error** - Fixed 204 No Content handling
+2. ✅ **Worker Heartbeat Error** - Silently ignore connection errors during shutdown
+3. ✅ **Task ID Format Inconsistency** - Unified ID format handling across APIs
+
+## 📖 Development
+
+### Project Status
+
+- ✅ **Go Version**: Production-ready
+- ✅ **Node.js Version**: Production-ready (v20 LTS)
+- ❌ **Node.js v22/v24**: Not supported (better-sqlite3 incompatibility)
+
+### Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/MoSiYuan/AgentFlow.git
+cd AgentFlow
+
+# Go version (ready to use)
+./agentflow-go.sh run '["echo test"]'
+
+# Node.js version (requires setup)
+cd nodejs
+export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
+pnpm install
+pnpm run build
+```
+
+## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## Acknowledgments
+## 🤝 Contributing
 
-- Built for [Claude Code](https://github.com/anthropics/claude-code)
-- Inspired by modern task orchestration systems
-- Powered by [Anthropic Claude](https://www.anthropic.com/claude)
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📞 Support
+
+For issues, questions, or suggestions, please open an issue on GitHub.
 
 ---
 
-**Version**: 2.0.0 | **Status**: Production Ready
+**Made with ❤️ by the AgentFlow Team**

@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      better-sqlite3:
+        specifier: 12.6.2
+        version: 12.6.2
     devDependencies:
       '@types/node':
         specifier: ^20.11.0
@@ -26,6 +30,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@agentflow/local-executor':
+        specifier: workspace:*
+        version: link:../local-executor
       '@agentflow/master':
         specifier: workspace:*
         version: link:../master
@@ -52,8 +59,11 @@ importers:
   packages/database:
     dependencies:
       better-sqlite3:
-        specifier: ^9.2.2
-        version: 9.6.0
+        specifier: 12.6.2
+        version: 12.6.2
+      node-sqlite3:
+        specifier: ^0.0.3
+        version: 0.0.3
     devDependencies:
       '@agentflow/shared':
         specifier: workspace:*
@@ -61,6 +71,25 @@ importers:
       '@types/better-sqlite3':
         specifier: ^7.6.9
         version: 7.6.13
+
+  packages/local-executor:
+    dependencies:
+      '@agentflow/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@agentflow/skill':
+        specifier: workspace:*
+        version: link:../skill
+      '@agentflow/worker':
+        specifier: workspace:*
+        version: link:../worker
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.30
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
 
   packages/master:
     dependencies:
@@ -282,6 +311,10 @@ packages:
 
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
+
+  better-sqlite3@12.6.2:
+    resolution: {integrity: sha512-8VYKM3MjCa9WcaSAI3hzwhmyHVlH8tiGFwf0RlTsZPWJ1I5MkzjiudCo4KC4DxOaL/53A5B1sI/IbldNFDbsKA==}
+    engines: {node: 20.x || 22.x || 23.x || 24.x || 25.x}
 
   better-sqlite3@9.6.0:
     resolution: {integrity: sha512-yR5HATnqeYNVnkaUTf4bOP2dJSnyhP4puJN/QPRyx4YkBEEUxib422n2XzPqDEHjQQqazoYoADdAm5vE15+dAQ==}
@@ -797,6 +830,9 @@ packages:
       encoding:
         optional: true
 
+  node-sqlite3@0.0.3:
+    resolution: {integrity: sha512-fpMRPmFp+93+zeVQ8p9wb0EwUJqf7DcBF4PVBbMwfA7gTxPJWZQxvuHVjSYKogHmaD872KY8JuJtCQdnb++h/A==}
+
   object-inspect@1.13.4:
     resolution: {integrity: sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==}
     engines: {node: '>= 0.4'}
@@ -1304,6 +1340,11 @@ snapshots:
   balanced-match@1.0.2: {}
 
   base64-js@1.5.1: {}
+
+  better-sqlite3@12.6.2:
+    dependencies:
+      bindings: 1.5.0
+      prebuild-install: 7.1.3
 
   better-sqlite3@9.6.0:
     dependencies:
@@ -1831,6 +1872,8 @@ snapshots:
   node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
+
+  node-sqlite3@0.0.3: {}
 
   object-inspect@1.13.4: {}
 

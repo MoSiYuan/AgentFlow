@@ -9,7 +9,10 @@ import { program } from 'commander';
 import chalk from 'chalk';
 import { Master } from '@agentflow/master';
 import { Worker } from '@agentflow/worker';
+import { LocalExecutor } from '@agentflow/local-executor';
 import type { MasterConfig, WorkerConfig } from '@agentflow/shared';
+import * as path from 'path';
+import * as os from 'os';
 
 // CLI version
 const VERSION = '1.0.0';
@@ -57,6 +60,46 @@ const masterCommand = new Command('master')
 
     } catch (error) {
       console.error(chalk.red('Failed to start master:'), error);
+      process.exit(1);
+    }
+  });
+
+// Run command - execute tasks with automatic Master/Worker management
+const runCommand = new Command('run')
+  .description('Execute tasks (automatically manages Master and Worker)')
+  .argument('[command]', 'Command to execute')
+  .option('--title <title>', 'Task title')
+  .option('--master-host <host>', 'Master host', 'localhost')
+  .option('--master-port <port>', 'Master port', '6767')
+  .option('--db <path>', 'Database path', path.join(os.tmpdir(), 'agentflow-cli.db'))
+  .option('--no-shutdown', 'Keep Master and Worker running after completion')
+  .option('--group <group>', 'Worker group name', 'cli')
+  .action(async (command, options) => {
+    if (!command) {
+      console.error(chalk.red('Error: Command is required'));
+      console.log(chalk.yellow('Example: agentflow run "echo Hello World"'));
+      process.exit(1);
+    }
+
+    const executor = new LocalExecutor({
+      masterPath: path.join(__dirname, '../../master/dist/index.js'),
+      masterHost: options.masterHost,
+      masterPort: parseInt(options.masterPort),
+      dbPath: options.db,
+      shutdownOnComplete: options.shutdown
+    });
+
+    try {
+      console.log(chalk.cyan(`\n🚀 Executing: ${command}\n`));
+
+      await executor.executeOne(
+        options.title || command.split(' ')[0],
+        command
+      );
+
+      console.log(chalk.green('\n✅ Execution complete!\n'));
+    } catch (error) {
+      console.error(chalk.red('\n❌ Execution failed:'), error);
       process.exit(1);
     }
   });
@@ -114,6 +157,7 @@ const workerCommand = new Command('worker')
   });
 
 // Add commands to program
+program.addCommand(runCommand);
 program.addCommand(masterCommand);
 program.addCommand(workerCommand);
 

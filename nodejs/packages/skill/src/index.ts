@@ -112,7 +112,9 @@ export class AgentFlowSkill {
    * Get task status
    */
   async getTaskStatus(taskId: string): Promise<any> {
-    const response = await fetch(`${this.masterUrl}/api/v1/tasks/${taskId}`);
+    // Extract numeric ID from TASK-XXXXXXX format if needed
+    const numericId = taskId.replace(/\D/g, '');
+    const response = await fetch(`${this.masterUrl}/api/v1/tasks/${numericId}`);
 
     if (!response.ok) {
       throw new Error(`Failed to get task status: ${response.statusText}`);

@@ -9,11 +9,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "better-sqlite3": "^9.2.2"
+    "better-sqlite3": "12.6.2",
+    "node-sqlite3": "^0.0.3"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.9",
-    "@agentflow/shared": "workspace:*"
+    "@agentflow/shared": "workspace:*",
+    "@types/better-sqlite3": "^7.6.9"
   },
   "author": "AgentFlow Team",
   "license": "MIT"

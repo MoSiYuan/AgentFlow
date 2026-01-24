@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AgentFlow CLI Tool",
   "bin": {
+    "agentflow": "./dist/index.js",
     "agentflow-master": "./dist/index.js",
     "agentflow-worker": "./dist/index.js"
   },
@@ -19,6 +20,7 @@
     "chalk": "^5.3.0",
     "@agentflow/master": "workspace:*",
     "@agentflow/worker": "workspace:*",
+    "@agentflow/local-executor": "workspace:*",
     "@agentflow/shared": "workspace:*"
   },
   "devDependencies": {

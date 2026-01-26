@@ -138,3 +138,59 @@ CREATE INDEX IF NOT EXISTS idx_git_tasks_agent ON git_tasks(agent_id);
 CREATE INDEX IF NOT EXISTS idx_git_locks_file ON git_locks(file_path);
 CREATE INDEX IF NOT EXISTS idx_git_locks_status ON git_locks(status);
 CREATE INDEX IF NOT EXISTS idx_git_conflicts_status ON git_conflicts(status);
+
+-- Claude Integration Tables
+-- AgentFlow 与 Claude CLI 深度集成
+CREATE TABLE IF NOT EXISTS claude_mappings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL,
+    session_uuid TEXT NOT NULL,
+    message_uuid TEXT NOT NULL UNIQUE,
+    parent_message_uuid TEXT,
+    slug TEXT,
+    source TEXT DEFAULT 'api',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+-- Claude Integration Indexes
+CREATE INDEX IF NOT EXISTS idx_claude_session ON claude_mappings(session_uuid);
+CREATE INDEX IF NOT EXISTS idx_claude_message ON claude_mappings(message_uuid);
+CREATE INDEX IF NOT EXISTS idx_claude_task ON claude_mappings(task_id);
+CREATE INDEX IF NOT EXISTS idx_claude_parent ON claude_mappings(parent_message_uuid);
+CREATE INDEX IF NOT EXISTS idx_claude_slug ON claude_mappings(slug);
+
+-- Task Chain Tables
+-- 支持串行、并行、树形任务链
+CREATE TABLE IF NOT EXISTS task_chains (
+    id TEXT PRIMARY KEY,
+    session_uuid TEXT NOT NULL,
+    root_message_uuid TEXT NOT NULL,
+    chain_type TEXT NOT NULL CHECK(chain_type IN ('sequential', 'parallel', 'tree')),
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'running', 'completed', 'failed')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME,
+    completed_at DATETIME
+);
+
+-- Task Chain Nodes (任务链节点)
+CREATE TABLE IF NOT EXISTS task_chain_nodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chain_id TEXT NOT NULL,
+    task_id INTEGER NOT NULL,
+    parent_node_id INTEGER,
+    node_order INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chain_id) REFERENCES task_chains(id) ON DELETE CASCADE,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_node_id) REFERENCES task_chain_nodes(id) ON DELETE SET NULL
+);
+
+-- Task Chain Indexes
+CREATE INDEX IF NOT EXISTS idx_task_chains_session ON task_chains(session_uuid);
+CREATE INDEX IF NOT EXISTS idx_task_chains_status ON task_chains(status);
+CREATE INDEX IF NOT EXISTS idx_task_chains_type ON task_chains(chain_type);
+CREATE INDEX IF NOT EXISTS idx_task_chain_nodes_chain ON task_chain_nodes(chain_id);
+CREATE INDEX IF NOT EXISTS idx_task_chain_nodes_task ON task_chain_nodes(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_chain_nodes_parent ON task_chain_nodes(parent_node_id);

@@ -1,0 +1,24 @@
+{
+  "name": "@agentflow/git-integration",
+  "version": "1.0.0",
+  "description": "Git integration for AgentFlow with Claude support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest"
+  },
+  "keywords": [
+    "agentflow",
+    "git",
+    "claude",
+    "integration"
+  ],
+  "author": "AgentFlow Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.9.3"
+  }
+}

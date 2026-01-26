@@ -6,6 +6,8 @@
  */
 
 import Database from 'better-sqlite3';
+import { homedir } from 'os';
+import { resolve } from 'path';
 import type {
   Task,
   Worker,
@@ -19,8 +21,14 @@ import type {
 export class AgentFlowDatabase {
   private db: Database.Database;
 
-  constructor(dbPath: string = '.claude/cpds-manager/agentflow.db') {
-    this.db = new Database(dbPath);
+  constructor(dbPath: string = '~/.claude/skills/agentflow/agentflow.db') {
+    // Expand ~ to home directory
+    let expandedPath = dbPath;
+    if (dbPath.startsWith('~')) {
+      expandedPath = resolve(homedir(), dbPath.slice(1));
+    }
+
+    this.db = new Database(expandedPath);
     this.db.pragma('journal_mode = WAL');
     this.db.pragma('foreign_keys = ON');
   }
@@ -164,6 +172,47 @@ export class AgentFlowDatabase {
         FOREIGN KEY (upgraded_from) REFERENCES tasks(id) ON DELETE SET NULL,
         UNIQUE(task_id, version_number)
       );
+
+      -- Claude Integration Tables
+      -- AgentFlow 与 Claude CLI 深度集成
+      CREATE TABLE IF NOT EXISTS claude_mappings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id INTEGER NOT NULL,
+        session_uuid TEXT NOT NULL,
+        message_uuid TEXT NOT NULL UNIQUE,
+        parent_message_uuid TEXT,
+        slug TEXT,
+        source TEXT DEFAULT 'api',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+      );
+
+      -- Task Chain Tables
+      -- 支持串行、并行、树形任务链
+      CREATE TABLE IF NOT EXISTS task_chains (
+        id TEXT PRIMARY KEY,
+        session_uuid TEXT NOT NULL,
+        root_message_uuid TEXT NOT NULL,
+        chain_type TEXT NOT NULL CHECK(chain_type IN ('sequential', 'parallel', 'tree')),
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'running', 'completed', 'failed')),
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        started_at DATETIME,
+        completed_at DATETIME
+      );
+
+      -- Task Chain Nodes (任务链节点)
+      CREATE TABLE IF NOT EXISTS task_chain_nodes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chain_id TEXT NOT NULL,
+        task_id INTEGER NOT NULL,
+        parent_node_id INTEGER,
+        node_order INTEGER NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (chain_id) REFERENCES task_chains(id) ON DELETE CASCADE,
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_node_id) REFERENCES task_chain_nodes(id) ON DELETE SET NULL
+      );
     `);
 
     // Create indexes
@@ -187,6 +236,17 @@ export class AgentFlowDatabase {
       CREATE INDEX IF NOT EXISTS idx_task_checkpoints_timestamp ON task_checkpoints(timestamp DESC);
       CREATE INDEX IF NOT EXISTS idx_task_versions_task ON task_versions(task_id);
       CREATE INDEX IF NOT EXISTS idx_task_versions_number ON task_versions(task_id, version_number);
+      CREATE INDEX IF NOT EXISTS idx_claude_session ON claude_mappings(session_uuid);
+      CREATE INDEX IF NOT EXISTS idx_claude_message ON claude_mappings(message_uuid);
+      CREATE INDEX IF NOT EXISTS idx_claude_task ON claude_mappings(task_id);
+      CREATE INDEX IF NOT EXISTS idx_claude_parent ON claude_mappings(parent_message_uuid);
+      CREATE INDEX IF NOT EXISTS idx_claude_slug ON claude_mappings(slug);
+      CREATE INDEX IF NOT EXISTS idx_task_chains_session ON task_chains(session_uuid);
+      CREATE INDEX IF NOT EXISTS idx_task_chains_status ON task_chains(status);
+      CREATE INDEX IF NOT EXISTS idx_task_chains_type ON task_chains(chain_type);
+      CREATE INDEX IF NOT EXISTS idx_task_chain_nodes_chain ON task_chain_nodes(chain_id);
+      CREATE INDEX IF NOT EXISTS idx_task_chain_nodes_task ON task_chain_nodes(task_id);
+      CREATE INDEX IF NOT EXISTS idx_task_chain_nodes_parent ON task_chain_nodes(parent_node_id);
     `);
   }
 
@@ -988,6 +1048,278 @@ export class AgentFlowDatabase {
 
     const result = stmt.run(timeoutMinutes);
     return result.changes;
+  }
+
+  // ==================== Claude Integration ====================
+
+  /**
+   * Create Claude ID mapping
+   */
+  createClaudeMapping(data: {
+    task_id: number;
+    session_uuid: string;
+    message_uuid: string;
+    parent_message_uuid?: string;
+    slug?: string;
+    source?: string;
+  }): boolean {
+    const stmt = this.db.prepare(`
+      INSERT INTO claude_mappings
+      (task_id, session_uuid, message_uuid, parent_message_uuid, slug, source)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    try {
+      const result = stmt.run(
+        data.task_id,
+        data.session_uuid,
+        data.message_uuid,
+        data.parent_message_uuid || null,
+        data.slug || null,
+        data.source || 'api'
+      );
+      return result.changes > 0;
+    } catch (error) {
+      console.error('Error creating Claude mapping:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get Claude mapping by AgentFlow Task ID
+   */
+  getClaudeMappingByTaskID(taskId: string): any | null {
+    const stmt = this.db.prepare(`
+      SELECT id, task_id, session_uuid, message_uuid,
+             parent_message_uuid, slug, source, created_at, updated_at
+      FROM claude_mappings
+      WHERE task_id = ?
+    `);
+
+    const row = stmt.get(taskId) as any;
+    return row || null;
+  }
+
+  /**
+   * Get Claude mapping by Message UUID (reverse lookup)
+   */
+  getClaudeMappingByMessageUUID(messageUUID: string): any | null {
+    const stmt = this.db.prepare(`
+      SELECT id, task_id, session_uuid, message_uuid,
+             parent_message_uuid, slug, source, created_at, updated_at
+      FROM claude_mappings
+      WHERE message_uuid = ?
+    `);
+
+    const row = stmt.get(messageUUID) as any;
+    return row || null;
+  }
+
+  /**
+   * Get task chain by Session UUID
+   */
+  getTaskChainBySession(sessionUUID: string): any[] {
+    const stmt = this.db.prepare(`
+      SELECT id, task_id, session_uuid, message_uuid,
+             parent_message_uuid, slug, source, created_at, updated_at
+      FROM claude_mappings
+      WHERE session_uuid = ?
+      ORDER BY created_at ASC
+    `);
+
+    return stmt.all(sessionUUID);
+  }
+
+  /**
+   * Get Claude mapping by Slug (friendly name)
+   */
+  getClaudeMappingBySlug(slug: string): any | null {
+    const stmt = this.db.prepare(`
+      SELECT id, task_id, session_uuid, message_uuid,
+             parent_message_uuid, slug, source, created_at, updated_at
+      FROM claude_mappings
+      WHERE slug = ?
+    `);
+
+    const row = stmt.get(slug) as any;
+    return row || null;
+  }
+
+  /**
+   * Update Claude mapping slug
+   */
+  updateClaudeMappingSlug(taskId: string, slug: string): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE claude_mappings
+      SET slug = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE task_id = ?
+    `);
+
+    const result = stmt.run(slug, taskId);
+    return result.changes > 0;
+  }
+
+  /**
+   * Delete Claude mapping
+   */
+  deleteClaudeMapping(taskId: string): boolean {
+    const stmt = this.db.prepare(`DELETE FROM claude_mappings WHERE task_id = ?`);
+    const result = stmt.run(taskId);
+    return result.changes > 0;
+  }
+
+  /**
+   * List Claude mappings by session (with pagination)
+   */
+  listClaudeMappingsBySession(
+    sessionUUID: string,
+    limit: number = 50,
+    offset: number = 0
+  ): any[] {
+    const stmt = this.db.prepare(`
+      SELECT id, task_id, session_uuid, message_uuid,
+             parent_message_uuid, slug, source, created_at, updated_at
+      FROM claude_mappings
+      WHERE session_uuid = ?
+      ORDER BY created_at ASC
+      LIMIT ? OFFSET ?
+    `);
+
+    return stmt.all(sessionUUID, limit, offset);
+  }
+
+  // ==================== Task Chain Management ====================
+
+  /**
+   * Create task chain
+   */
+  createTaskChain(data: {
+    id: string;
+    session_uuid: string;
+    root_message_uuid: string;
+    chain_type: 'sequential' | 'parallel' | 'tree';
+    status?: string;
+  }): boolean {
+    const stmt = this.db.prepare(`
+      INSERT INTO task_chains (id, session_uuid, root_message_uuid, chain_type, status)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    try {
+      const result = stmt.run(
+        data.id,
+        data.session_uuid,
+        data.root_message_uuid,
+        data.chain_type,
+        data.status || 'pending'
+      );
+      return result.changes > 0;
+    } catch (error) {
+      console.error('Error creating task chain:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Create task chain node
+   */
+  createTaskChainNode(data: {
+    chain_id: string;
+    task_id: number;
+    parent_node_id?: number;
+    node_order: number;
+  }): number {
+    const stmt = this.db.prepare(`
+      INSERT INTO task_chain_nodes (chain_id, task_id, parent_node_id, node_order)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    try {
+      const result = stmt.run(
+        data.chain_id,
+        data.task_id,
+        data.parent_node_id || null,
+        data.node_order
+      );
+      return result.lastInsertRowid as number;
+    } catch (error) {
+      console.error('Error creating task chain node:', error);
+      return -1;
+    }
+  }
+
+  /**
+   * Get task chain by ID
+   */
+  getTaskChain(chainId: string): any | null {
+    const stmt = this.db.prepare(`
+      SELECT id, session_uuid, root_message_uuid, chain_type, status,
+             created_at, started_at, completed_at
+      FROM task_chains
+      WHERE id = ?
+    `);
+
+    const row = stmt.get(chainId) as any;
+    return row || null;
+  }
+
+  /**
+   * Get task chain nodes
+   */
+  getTaskChainNodes(chainId: string): any[] {
+    const stmt = this.db.prepare(`
+      SELECT id, chain_id, task_id, parent_node_id, node_order, created_at
+      FROM task_chain_nodes
+      WHERE chain_id = ?
+      ORDER BY node_order ASC
+    `);
+
+    return stmt.all(chainId);
+  }
+
+  /**
+   * Get task chains by session UUID
+   */
+  getTaskChainsBySession(sessionUUID: string): any[] {
+    const stmt = this.db.prepare(`
+      SELECT id, session_uuid, root_message_uuid, chain_type, status,
+             created_at, started_at, completed_at
+      FROM task_chains
+      WHERE session_uuid = ?
+      ORDER BY created_at DESC
+    `);
+
+    return stmt.all(sessionUUID);
+  }
+
+  /**
+   * Update task chain status
+   */
+  updateTaskChainStatus(chainId: string, status: string): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE task_chains
+      SET status = ?,
+          started_at = CASE WHEN ? = 'running' THEN CURRENT_TIMESTAMP ELSE started_at END,
+          completed_at = CASE WHEN ? IN ('completed', 'failed') THEN CURRENT_TIMESTAMP ELSE completed_at END
+      WHERE id = ?
+    `);
+
+    try {
+      const result = stmt.run(status, status, status, chainId);
+      return result.changes > 0;
+    } catch (error) {
+      console.error('Error updating task chain status:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete task chain
+   */
+  deleteTaskChain(chainId: string): boolean {
+    const stmt = this.db.prepare(`DELETE FROM task_chains WHERE id = ?`);
+    const result = stmt.run(chainId);
+    return result.changes > 0;
   }
 }
 

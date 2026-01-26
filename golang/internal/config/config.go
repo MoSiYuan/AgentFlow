@@ -20,7 +20,7 @@ type Config struct {
 type MasterConfig struct {
 	Host      string `yaml:"host" env:"HOST" envDefault:"0.0.0.0"`
 	Port      int    `yaml:"port" env:"PORT" envDefault:"8848"`
-	DBPath    string `yaml:"db_path" env:"DB_PATH" envDefault:".claude/cpds-manager/agentflow.db"`
+	DBPath    string `yaml:"db_path" env:"DB_PATH" envDefault:"~/.claude/skills/agentflow/agentflow.db"`
 	AutoStart bool   `yaml:"auto_start" env:"AUTO_START" envDefault:"false"`
 }
 
@@ -28,7 +28,7 @@ type MasterConfig struct {
 type WorkerConfig struct {
 	ID        string `yaml:"id" env:"ID"`
 	MasterURL string `yaml:"master_url" env:"MASTER_URL" envDefault:"http://localhost:8848"`
-	DBPath    string `yaml:"db_path" env:"DB_PATH" envDefault:".claude/cpds-manager/agentflow.db"`
+	DBPath    string `yaml:"db_path" env:"DB_PATH" envDefault:"~/.claude/skills/agentflow/agentflow.db"`
 	GroupName string `yaml:"group_name" env:"GROUP_NAME" envDefault:"default"`
 	Mode      string `yaml:"mode" env:"MODE" envDefault:"auto"` // auto, oneshot, manual
 }
@@ -119,12 +119,12 @@ func DefaultConfig() *Config {
 		Master: MasterConfig{
 			Host:      "0.0.0.0",
 			Port:      8848,
-			DBPath:    ".claude/cpds-manager/agentflow.db",
+			DBPath:    "~/.claude/skills/agentflow/agentflow.db",
 			AutoStart: false,
 		},
 		Worker: WorkerConfig{
 			MasterURL: "http://localhost:8848",
-			DBPath:    ".claude/cpds-manager/agentflow.db",
+			DBPath:    "~/.claude/skills/agentflow/agentflow.db",
 			GroupName: "default",
 			Mode:      "auto",
 		},

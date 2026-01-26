@@ -94,7 +94,11 @@
       "Bash(/tmp/setup-agentflow-cli.sh:*)",
       "Bash(cd /Users/jiangxiaolong/work/project/AgentFlow/docs/archive rm -rf deployment-tests/ mv deployment deployment-backup)",
       "Bash(true ls -d */)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(for:*)",
+      "Bash(file:*)",
+      "Bash(./node_modules/.bin/tsc:*)",
+      "Bash(/opt/homebrew/bin/node:*)"
     ]
   }
 }

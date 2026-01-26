@@ -15,7 +15,13 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "master": "node packages/master/dist/index.js",
     "worker": "node packages/worker/dist/index.js",
-    "cli": "node packages/cli/dist/index.js"
+    "cli": "node packages/cli/dist/index.js",
+    "package": "./package.sh",
+    "package:standalone": "pkg packages/master/dist/index.js --targets node20-macos-x64,node20-linux-x64 --output dist/agentflow-master -C Brotli --compress GZip",
+    "docker:build": "docker build -f Dockerfile.standalone -t agentflow:latest .",
+    "docker:run": "docker run -p 6767:6767 -v ~/.claude:/root/.claude -v agentflow-data:/data agentflow:latest",
+    "docker:compose": "docker-compose up -d",
+    "docker:compose:down": "docker-compose down"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -1,0 +1,24 @@
+{
+  "name": "@agentflow/query",
+  "version": "1.0.0",
+  "description": "Unified query interface for AgentFlow and Claude data",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest"
+  },
+  "keywords": [
+    "agentflow",
+    "claude",
+    "query",
+    "unified"
+  ],
+  "author": "AgentFlow Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.9.3"
+  }
+}

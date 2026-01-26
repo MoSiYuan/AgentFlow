@@ -369,6 +369,25 @@ func (bm *BranchManager) DeleteAgentBranch(branchName string, force bool) error 
 	return nil
 }
 
+// CreateBranch creates a new branch
+func (bm *BranchManager) CreateBranch(branchName string) error {
+	cmd := exec.Command("git", "branch", branchName)
+	cmd.Dir = bm.repoPath
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create branch: %s", string(output))
+	}
+
+	bm.logger.WithField("branch", branchName).Info("Branch created")
+	return nil
+}
+
+// DeleteBranch deletes a branch
+func (bm *BranchManager) DeleteBranch(branchName string) error {
+	return bm.DeleteAgentBranch(branchName, false)
+}
+
 // SwitchBranch switches to a branch
 func (bm *BranchManager) SwitchBranch(branchName string) error {
 	cmd := exec.Command("git", "checkout", branchName)
@@ -626,7 +645,7 @@ func (gm *GitIntegrationManager) storeGitTask(task *GitTask) error {
 			status = excluded.status
 	`
 
-	_, err := gm.db.DB.Exec(query,
+	_, err := gm.db.GetDB().Exec(query,
 		task.ID, task.Title, task.Description, task.AgentID,
 		task.GitBranch, string(boundariesJSON), task.Status, task.CreatedAt,
 	)
@@ -646,15 +665,13 @@ func (gm *GitIntegrationManager) storeGitTask(task *GitTask) error {
 
 // updateGitTask updates Git task in database
 func (gm *GitIntegrationManager) updateGitTask(task *GitTask) error {
-	boundariesJSON, _ := json.Marshal(task.FileBoundaries)
-
 	query := `
 		UPDATE git_tasks
 		SET status = ?, completed_at = ?
 		WHERE id = ?
 	`
 
-	_, err := gm.db.DB.Exec(query, task.Status, task.CompletedAt, task.ID)
+	_, err := gm.db.GetDB().Exec(query, task.Status, task.CompletedAt, task.ID)
 
 	if err != nil {
 		return fmt.Errorf("failed to update git task: %w", err)
@@ -729,3 +746,166 @@ func CreateGitTables(db *sql.DB) error {
 func generateID() string {
 	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
+
+// ==================== Claude Integration Enhancement ====================
+
+// ClaudeGitTask represents a Git task with Claude integration
+type ClaudeGitTask struct {
+	GitTask
+	SessionUUID       string `json:"session_uuid"`
+	MessageUUID       string `json:"message_uuid"`
+	ParentMessageUUID string `json:"parent_message_uuid,omitempty"`
+	Slug              string `json:"slug,omitempty"`
+}
+
+// CreateClaudeAgentTask creates a Git task integrated with Claude
+func (gm *GitIntegrationManager) CreateClaudeAgentTask(
+	ctx context.Context,
+	agentID, taskID, sessionUUID, messageUUID, parentMessageUUID, description string,
+) (*ClaudeGitTask, error) {
+	// Generate Claude-friendly branch name
+	branchName := gm.GenerateClaudeBranchName(sessionUUID, taskID)
+
+	// Create the Git task
+	gitTask, err := gm.CreateAgentTask(ctx, agentID, taskID, description)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create Claude mapping
+	mapping := &database.ClaudeMapping{
+		TaskID:            taskID,
+		SessionUUID:       sessionUUID,
+		MessageUUID:       messageUUID,
+		ParentMessageUUID: &parentMessageUUID,
+		Source:            "git",
+	}
+
+	if err := gm.db.CreateClaudeMapping(mapping); err != nil {
+		gm.logger.WithError(err).Warn("Failed to create Claude mapping for Git task")
+	}
+
+	claudeTask := &ClaudeGitTask{
+		GitTask:           *gitTask,
+		SessionUUID:       sessionUUID,
+		MessageUUID:       messageUUID,
+		ParentMessageUUID: parentMessageUUID,
+	}
+
+	gm.logger.WithFields(logrus.Fields{
+		"task_id":      taskID,
+		"session_uuid": sessionUUID,
+		"branch":       branchName,
+	}).Info("Claude Git task created")
+
+	return claudeTask, nil
+}
+
+// GenerateClaudeBranchName generates a branch name from Claude session UUID and task ID
+// Format: claude-{session_uuid前8位}/task-{taskID}
+func (gm *GitIntegrationManager) GenerateClaudeBranchName(sessionUUID, taskID string) string {
+	// Extract first 8 characters of session UUID
+	prefix := sessionUUID
+	if len(sessionUUID) > 8 {
+		prefix = sessionUUID[:8]
+	}
+
+	return fmt.Sprintf("claude-%s/task-%s", prefix, taskID)
+}
+
+// CreateBranchFromTaskChain creates branches for all tasks in a chain
+func (gm *GitIntegrationManager) CreateBranchFromTaskChain(
+	ctx context.Context,
+	chainID string,
+) ([]string, error) {
+	// Query task chain nodes
+	query := `
+		SELECT task_id, node_order
+		FROM task_chain_nodes
+		WHERE chain_id = ?
+		ORDER BY node_order ASC
+	`
+
+	rows, err := gm.db.GetDB().Query(query, chainID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query task chain nodes: %w", err)
+	}
+	defer rows.Close()
+
+	var branches []string
+	for rows.Next() {
+		var taskID int
+		var nodeOrder int
+
+		if err := rows.Scan(&taskID, &nodeOrder); err != nil {
+			return nil, err
+		}
+
+		// Get Claude mapping for this task
+		mapping, err := gm.db.GetClaudeMappingByTaskID(fmt.Sprintf("%d", taskID))
+		if err != nil {
+			gm.logger.WithError(err).WithField("task_id", taskID).Warn("No Claude mapping found for task")
+			continue
+		}
+
+		// Generate branch name
+		branchName := gm.GenerateClaudeBranchName(mapping.SessionUUID, fmt.Sprintf("%d", taskID))
+
+		// Create the branch
+		if err := gm.branchManager.CreateBranch(branchName); err != nil {
+			gm.logger.WithError(err).WithField("branch", branchName).Warn("Failed to create branch")
+			continue
+		}
+
+		branches = append(branches, branchName)
+	}
+
+	gm.logger.WithFields(logrus.Fields{
+		"chain_id":  chainID,
+		"branches":  len(branches),
+	}).Info("Created branches from task chain")
+
+	return branches, nil
+}
+
+// GetClaudeBranches returns all branches created for a Claude session
+func (gm *GitIntegrationManager) GetClaudeBranches(sessionUUID string) ([]string, error) {
+	// Get all mappings for this session
+	mappings, err := gm.db.GetTaskChainBySession(sessionUUID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session mappings: %w", err)
+	}
+
+	var branches []string
+	for _, mapping := range mappings {
+		branchName := gm.GenerateClaudeBranchName(mapping.SessionUUID, mapping.TaskID)
+		branches = append(branches, branchName)
+	}
+
+	return branches, nil
+}
+
+// CleanupClaudeBranches deletes all branches for a completed Claude session
+func (gm *GitIntegrationManager) CleanupClaudeBranches(sessionUUID string) (int, error) {
+	branches, err := gm.GetClaudeBranches(sessionUUID)
+	if err != nil {
+		return 0, err
+	}
+
+	deletedCount := 0
+	for _, branch := range branches {
+		if err := gm.branchManager.DeleteBranch(branch); err != nil {
+			gm.logger.WithError(err).WithField("branch", branch).Warn("Failed to delete branch")
+			continue
+		}
+		deletedCount++
+	}
+
+	gm.logger.WithFields(logrus.Fields{
+		"session_uuid": sessionUUID,
+		"deleted":      deletedCount,
+	}).Info("Cleaned up Claude branches")
+
+	return deletedCount, nil
+}
+

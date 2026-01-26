@@ -13,6 +13,18 @@
 - **[Node.js 版本指南](./NODEJS_GUIDE.md)** - Node.js 实现详细指南
 - **[Go 版本指南](./GO_VERSION_GUIDE.md)** - Go 实现详细指南
 
+### Claude 集成
+- **[Claude Task 研究总结](./CLAUDE_TASK_RESEARCH_SUMMARY.md)** - Claude Task 系统深度研究报告
+- **[深度集成方案](./CLAUDE_DEEP_INTEGRATION.md)** - 完整的深度集成技术方案
+- **[可行性分析](./CLAUDE_INTEGRATION_FEASIBILITY.md)** - 深度集成可行性评估
+- **[Claude 集成分析](./CLAUDE_INTEGRATION_ANALYSIS.md)** - 深度分析 AgentFlow 与 Claude CLI 的集成方案
+- **[Claude Skill 使用指南](./CLAUDE_SKILL_USAGE.md)** - 实战指南，展示如何在 Claude CLI 中使用 AgentFlow
+- **[集成方案总结](./CLAUDE_INTEGRATION_SUMMARY.md)** - 问题分析和解决方案总结
+
+### 测试报告
+- **[集成测试报告](./INTEGRATION_TEST_REPORT.md)** - 完整的功能测试报告（2026-01-24）
+- **[快速测试参考](./QUICK_TEST_REFERENCE.md)** - 一分钟快速测试指南
+
 ## 🗂️ 历史文档（归档）
 
 已归档的开发和测试报告，保留用于历史参考：

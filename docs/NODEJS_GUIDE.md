@@ -95,14 +95,14 @@ nodejs/
 ### 启动 Master 服务器
 
 ```bash
-# 基本启动
+# 基本启动（使用默认数据库路径 ~/.claude/skills/agentflow/agentflow.db）
 export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
 node packages/master/dist/index.js
 
 # 自定义端口和数据库
-node packages/master/dist/index.js --port 6767 --db data/agentflow.db
+node packages/master/dist/index.js --port 6767 --db /custom/path/agentflow.db
 
-# 使用默认配置（端口 6767，内存数据库）
+# 使用默认配置（端口 6767）
 node packages/master/dist/index.js
 ```
 
@@ -149,7 +149,7 @@ async function main() {
   const executor = new LocalExecutor({
     masterPath: './packages/master/dist/index.js',
     masterPort: 6767,
-    dbPath: './data/agentflow.db',
+    dbPath: '~/.claude/skills/agentflow/agentflow.db',
     shutdownOnComplete: true  // 完成后自动关闭
   });
 
@@ -340,7 +340,7 @@ pnpm run build --filter @agentflow/worker
 
 ```bash
 # 启动 Master（终端 1）
-node packages/master/dist/index.js --port 6767 --db test.db
+node packages/master/dist/index.js --port 6767
 
 # 启动 Worker（终端 2）
 node packages/worker/dist/index.js
@@ -464,6 +464,8 @@ const worker = new Worker({
 node packages/master/dist/index.js --db :memory:
 ```
 
+**注意**: 生产环境使用默认数据库路径 `~/.claude/skills/agentflow/agentflow.db`
+
 ### 3. 生产环境优化
 
 - 使用文件数据库（持久化）
@@ -476,9 +478,9 @@ node packages/master/dist/index.js --db :memory:
 ### 开发环境
 
 ```bash
-# 启动 Master
+# 启动 Master（使用默认数据库路径）
 export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
-node packages/master/dist/index.js --port 6767 --db dev.db
+node packages/master/dist/index.js --port 6767
 
 # 启动多个 Worker
 node packages/worker/dist/index.js &
@@ -493,8 +495,8 @@ node packages/worker/dist/index.js &
 ```bash
 npm install -g pm2
 
-# 启动 Master
-pm2 start packages/master/dist/index.js --name agentflow-master -- --port 6767 --db /var/lib/agentflow/agentflow.db
+# 启动 Master（使用默认数据库路径）
+pm2 start packages/master/dist/index.js --name agentflow-master -- --port 6767
 
 # 启动 Workers
 pm2 start packages/worker/dist/index.js --name agentflow-worker-1 -- --instances 3

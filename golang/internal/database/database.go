@@ -16,6 +16,11 @@ type Database struct {
 	db *sql.DB
 }
 
+// GetDB returns the underlying SQL database connection
+func (d *Database) GetDB() *sql.DB {
+	return d.db
+}
+
 func NewDatabase(dbPath string) (*Database, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -241,6 +246,21 @@ func (d *Database) FailTask(taskID, workerID, errorMsg string) error {
 	_, err := d.db.Exec(query, errorMsg, time.Now().UTC(), taskID, workerID)
 	if err != nil {
 		return fmt.Errorf("标记任务失败: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateTaskStatus updates the status of a task
+func (d *Database) UpdateTaskStatus(taskID string, status string) error {
+	query := `
+		UPDATE tasks
+		SET status = ?
+		WHERE id = ?
+	`
+	_, err := d.db.Exec(query, status, taskID)
+	if err != nil {
+		return fmt.Errorf("更新任务状态失败: %w", err)
 	}
 
 	return nil

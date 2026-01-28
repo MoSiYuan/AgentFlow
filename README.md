@@ -1,258 +1,207 @@
 # AgentFlow - AI Agent Task Collaboration System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8E.svg)](https://golang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-brightgreen.svg)](https://nodejs.org/)
+[![Rust](https://img.shields.io/badge/Rust-1.93+-orange.svg)](https://www.rust-lang.org/)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/MoSiYuan/AgentFlow)
 
-**Master-Worker architecture for asynchronous AI task collaboration with 100% API-compatible dual-language implementation.**
+**Single-process, high-performance AI agent task orchestration system written in pure Rust.**
+
+## 🎯 Version 3.0 (Pure Rust)
+
+AgentFlow v3 is a complete rewrite in Rust, featuring a revolutionary **single-process architecture** where the Master server also acts as the Worker, eliminating the need for separate worker processes.
+
+### Key Features
+
+- ✅ **Single Binary** - One executable, no dependencies
+- ✅ **Single Process** - Master = Worker, no inter-process communication
+- ✅ **High Performance** - Built on Tokio async runtime, < 100MB memory
+- ✅ **Direct Execution** - Executes Claude CLI directly via tokio::process
+- ✅ **Vector Memory** - SQLite-based vector indexing for semantic retrieval
+- ✅ **Sandbox Security** - Complete path validation and process isolation
+- ✅ **REST API** - 14 HTTP endpoints
+- ✅ **Real-time** - WebSocket and SSE streaming support
 
 ## 🚀 Quick Start
 
-### Option 1: Go Version (Recommended - Zero Dependencies) ⭐
+### 1. Install Rust
 
 ```bash
-# Clone repository
-git clone https://github.com/MoSiYuan/AgentFlow.git
-cd AgentFlow
-
-# Use immediately (no installation needed)
-./agentflow-go.sh run '["echo hello","echo world"]'
-
-# Output:
-# ✓ 准备执行 2 个任务
-# ✓ [1/2] 执行: echo hello
-# hello
-# ✓ [1/2] ✓ 成功
-# ✓ [2/2] 执行: echo world
-# world
-# ✓ [2/2] ✓ 成功
-# ✓ 执行完成: 2/2 成功, 0 失败
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source "$HOME/.cargo/env"
 ```
 
-**Features:**
-- ✅ Zero dependencies (no Node.js, Python, etc.)
-- ✅ Download and use, 30 seconds to start
-- ✅ Single binary file (13-16MB)
-- ✅ Supports macOS, Linux, Windows
-- ✅ 100% API-compatible with Node.js version
-
-### Option 2: Node.js Version (Latest: v20 LTS)
+### 2. Build AgentFlow
 
 ```bash
-# Navigate to Node.js directory
-cd nodejs
+cd rust
+export SQLX_OFFLINE=true
+cargo build --release
+```
 
-# Set Node.js 20 environment
-export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
+### 3. Run AgentFlow
 
-# Install dependencies
-pnpm install
+```bash
+./target/release/agentflow-master
+```
 
-# Build all packages
-pnpm run build
+Server will start on `http://localhost:6767`
 
-# Start Master
-node packages/master/dist/index.js --port 6767 --db data/agentflow.db
+## 📝 Usage Examples
 
-# Start Worker (another terminal)
-node packages/worker/dist/index.js
+### Create a Task
 
-# Create task
+```bash
 curl -X POST http://localhost:6767/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Test Task",
-    "description": "echo Hello from Node.js 20!",
-    "group_name": "default"
+    "description": "echo Hello from AgentFlow v3!",
+    "priority": "high"
   }'
 ```
 
-### Option 3: Simple CLI (One-Line Execution) ✨
+### Execute a Task (with SSE streaming)
 
 ```bash
-# Execute tasks in one command
-node nodejs/packages/cli/dist/index.js run "echo Hello AgentFlow!"
-
-# With custom title
-node nodejs/packages/cli/dist/index.js run "npm test" --title "Run Tests"
-
-# Keep services running
-node nodejs/packages/cli/dist/index.js run "echo test" --no-shutdown
+curl -X POST http://localhost:6767/api/v1/tasks/1/execute \
+  -H "Accept: text/event-stream"
 ```
 
-## 📦 Architecture
+### Query Task Status
 
-```
-AgentFlow/
-├── cmd/                    # Go implementation
-│   ├── agentflow-master/   # Master server (Go)
-│   └── agentflow-worker/   # Worker (Go)
-├── nodejs/                 # Node.js implementation
-│   ├── packages/
-│   │   ├── master/        # Master server (Node.js)
-│   │   ├── worker/        # Worker (Node.js)
-│   │   ├── local-executor/# Automatic management
-│   │   ├── cli/           # Command-line tool
-│   │   ├── database/      # SQLite database
-│   │   ├── shared/        # Shared types
-│   │   └── skill/         # Task management API
-│   └── package.json
-├── deployment/             # Deployment scripts
-├── examples/               # Usage examples
-└── docs/                  # Documentation
-    ├── archive/           # Archived reports
-    └── ...
+```bash
+curl http://localhost:6767/api/v1/tasks/1
 ```
 
-## 🎯 Features
-
-### Core Capabilities
-
-- ✅ **Task Orchestration**: DAG-based task dependency resolution
-- ✅ **Parallel Execution**: Multi-worker concurrent task processing
-- ✅ **API Compatible**: 100% compatible between Go and Node.js versions
-- ✅ **Claude CLI Integration**: Automatic use of Claude CLI for complex tasks
-- ✅ **Checkpoint Support**: Task state saving and recovery
-- ✅ **WebSocket Support**: Real-time task status updates
-- ✅ **SQLite Database**: Persistent task storage
-- ✅ **RESTful API**: Standard HTTP API for task management
-
-### Task Execution Flow
+## 🏗️ Architecture
 
 ```
-┌─────────────┐
-│   Client    │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────┐
-│  Master Server  │
-│  (Port 6767)    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Task Queue     │
-│  (SQLite DB)    │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    ▼         ▼
-┌────────┐ ┌────────┐
-│Worker 1│ │Worker 2│  ...
-└────────┘ └────────┘
+┌─────────────────────────────────────────────┐
+│   agentflow-master (单一二进制)             │
+│                                             │
+│  ┌───────────────────────────────────────┐ │
+│  │  HTTP/WebSocket API (Axum)            │ │
+│  └───────────┬───────────────────────────┘ │
+│              ↓                              │
+│  ┌───────────────────────────────────────┐ │
+│  │  Task Scheduler                       │ │
+│  └───────────┬───────────────────────────┘ │
+│              ↓                              │
+│  ┌───────────────────────────────────────┐ │
+│  │  TaskExecutor (tokio::process)       │ │
+│  │  - Execute Claude CLI                  │ │
+│  │  - ProcessKiller (timeout)            │ │
+│  │  - PromptBuilder                       │ │
+│  └───────────┬───────────────────────────┘ │
+│              ↓                              │
+│  ┌───────────────────────────────────────┐ │
+│  │  MemoryCore (SQLite)                  │ │
+│  │  - Vector indexing                    │ │
+│  │  - Semantic search                    │ │
+│  └───────────┬───────────────────────────┘ │
+│              ↓                              │
+│  ┌───────────────────────────────────────┐ │
+│  │  Sandbox (Security)                   │ │
+│  │  - Path whitelist                     │ │
+│  │  - Symlink protection                 │ │
+│  └───────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
+              ↓
+    ┌──────────────────┐
+    │  claude CLI      │
+    └──────────────────┘
+```
+
+## 📦 Project Structure
+
+```
+rust/
+├── agentflow-core/          # Core library
+│   ├── src/
+│   │   ├── types.rs        # Shared types
+│   │   ├── executor/       # Task execution engine
+│   │   ├── memory/         # Memory system
+│   │   └── sandbox/        # Security sandbox
+│   └── Cargo.toml
+│
+└── agentflow-master/        # Master server
+    ├── src/
+    │   ├── main.rs         # Entry point
+    │   ├── config.rs       # Configuration
+    │   ├── executor.rs     # Executor integration
+    │   ├── memory_core.rs  # Memory integration
+    │   └── routes/         # API routes
+    └── Cargo.toml
 ```
 
 ## 📚 Documentation
 
-### Core Documentation
+- **[RUST_V3_QUICKSTART.md](RUST_V3_QUICKSTART.md)** - Quick start guide
+- **[RUST_V3_IMPLEMENTATION.md](RUST_V3_IMPLEMENTATION.md)** - Implementation details
+- **[RUST_V3_FINAL_REPORT.md](RUST_V3_FINAL_REPORT.md)** - Final report
 
-- **[CLI Guide](AGENTFLOW_CLI_GUIDE.md)** - Command-line interface usage
-- **[Go Version Guide](docs/GO_VERSION_GUIDE.md)** - Go implementation details
-- **[Node.js Guide](docs/NODEJS_GUIDE.md)** - Node.js implementation details
+## 🔧 Configuration
 
-### Archived Reports
+Environment variables (`.env` file):
 
-Historical development and testing reports are available in [docs/archive/](docs/archive/).
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AGENTFLOW_PORT` | 6767 | Server port |
+| `DATABASE_URL` | sqlite://agentflow.db | Database connection |
+| `RUST_LOG` | info | Log level |
+| `SQLX_OFFLINE` | true | SQLx offline mode |
 
-## 🔧 System Requirements
+## 🔒 Security Features
 
-### Go Version
-- **OS**: macOS, Linux, Windows
-- **Dependencies**: None (zero-deployment)
+- ✅ **Path Whitelist** - Only allows access to specified directories
+- ✅ **Path Traversal Protection** - Detects and blocks `../` attacks
+- ✅ **Symlink Protection** - Recursive symlink resolution with depth limit
+- ✅ **Process Timeout** - Automatic process termination (SIGTERM → wait → SIGKILL)
+- ✅ **Process Group Cleanup** - Cleans up all child processes
 
-### Node.js Version
-- **Node.js**: v20.19.6 LTS
-- **pnpm**: v10.28.1+
-- **better-sqlite3**: v12.6.2
-- **OS**: macOS, Linux, Windows
+## 📊 Performance
 
-## 🚦 Quick Reference
+- **Memory Usage**: < 100MB (idle)
+- **Startup Time**: < 1 second
+- **Concurrent Tasks**: 5+ (configurable)
+- **API Response**: < 10ms
 
-### Go Version Commands
+## 🆚 Historical Context
+
+AgentFlow v3 is the result of multiple iterations:
+
+- **v1.0**: Initial Node.js version with Master + Worker architecture
+- **v2.0**: Added Go version, memory system, and skills integration
+- **v3.0**: Complete Rust rewrite with single-process architecture
+
+**Previous versions** (Node.js and Go) are **archived** in `docs/archive/old-versions/` for historical reference.
+
+The Rust v3 version supersedes all previous versions with:
+- **Simpler architecture** - Single process instead of Master + Worker
+- **Better performance** - Tokio async runtime, lower memory footprint
+- **Zero dependencies** - No need for Node.js runtime
+- **Enhanced security** - Complete sandbox and process isolation
+- **Cleaner codebase** - 176KB of source code vs 812KB (Node.js)
+
+## 🛠️ Development
+
+### Build
 
 ```bash
-# Run tasks directly
-./agentflow-go.sh run '["echo hello","echo world"]'
-
-# Start Master server
-./agentflow-master-darwin-arm64 --port 6767 --db data/agentflow.db
-
-# Start Worker
-./agentflow-worker-darwin-arm64 --master http://localhost:6767
+cd rust
+cargo build --release
 ```
 
-### Node.js Version Commands
+### Test
 
 ```bash
-# Start Master
-export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
-node nodejs/packages/master/dist/index.js --port 6767
-
-# Start Worker
-node nodejs/packages/worker/dist/index.js
-
-# Execute with CLI
-node nodejs/packages/cli/dist/index.js run "echo hello"
-
-# LocalExecutor (programmatic)
-node -e "
-const { LocalExecutor } = require('./nodejs/packages/local-executor/dist/index.js');
-const executor = new LocalExecutor({
-  masterPath: './nodejs/packages/master/dist/index.js',
-  masterPort: 6767,
-  dbPath: './data/agentflow.db',
-  shutdownOnComplete: true
-});
-executor.executeOne('My Task', 'echo Hello World');
-"
+cargo test
 ```
 
-## 🔄 Version Comparison
-
-| Feature | Go Version | Node.js Version |
-|---------|-----------|----------------|
-| **Dependencies** | None | Node.js 20 + pnpm |
-| **Binary Size** | 13-16 MB | N/A (interpreted) |
-| **Startup Time** | <100ms | ~1s |
-| **Memory Usage** | ~20MB | ~80MB |
-| **Platform Support** | All platforms | Node.js 18-20 |
-| **Deployment** | Zero-dep | Requires Node.js 20 |
-| **Performance** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **Ease of Debug** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Development** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-
-## 🐛 Bug Fixes
-
-### Latest Fixes (Node.js v20)
-
-1. ✅ **Worker JSON Parse Error** - Fixed 204 No Content handling
-2. ✅ **Worker Heartbeat Error** - Silently ignore connection errors during shutdown
-3. ✅ **Task ID Format Inconsistency** - Unified ID format handling across APIs
-
-## 📖 Development
-
-### Project Status
-
-- ✅ **Go Version**: Production-ready
-- ✅ **Node.js Version**: Production-ready (v20 LTS)
-- ❌ **Node.js v22/v24**: Not supported (better-sqlite3 incompatibility)
-
-### Getting Started
+### Run
 
 ```bash
-# Clone the repository
-git clone https://github.com/MoSiYuan/AgentFlow.git
-cd AgentFlow
-
-# Go version (ready to use)
-./agentflow-go.sh run '["echo test"]'
-
-# Node.js version (requires setup)
-cd nodejs
-export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
-pnpm install
-pnpm run build
+cargo run --bin agentflow-master
 ```
 
 ## 📄 License
@@ -269,4 +218,4 @@ For issues, questions, or suggestions, please open an issue on GitHub.
 
 ---
 
-**Made with ❤️ by the AgentFlow Team**
+**Made with ❤️ and Rust by the AgentFlow Team**

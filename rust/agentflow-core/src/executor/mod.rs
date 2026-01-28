@@ -3,16 +3,19 @@
 //! 负责执行 Claude AI 任务，提供进程管理、超时控制、输出捕获等功能。
 
 mod killer;
+mod memory_processor;
 mod prompt_builder;
 
 pub use killer::ProcessKiller;
+pub use memory_processor::MemoryProcessor;
 pub use prompt_builder::{PromptBuilder, PromptBuilderConfig};
 
 use anyhow::{Context, Result};
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::process::Command;
-use tracing::{debug, error, info};
+use tracing::{debug, info, warn};
 
 /// 执行结果
 #[derive(Debug, Clone)]
@@ -34,11 +37,14 @@ pub struct ExecutionResult {
 /// - 工作目录设置（Git 沙箱路径）
 /// - 实时输出捕获
 /// - 超时控制
+/// - 任务完成后自动整理记忆（可选）
 pub struct TaskExecutor {
     /// 工作区路径（Git 沙箱目录）
     workspace_path: PathBuf,
     /// 执行超时时间
     timeout: Duration,
+    /// 记忆处理器（可选）
+    memory_processor: Option<MemoryProcessor>,
 }
 
 impl TaskExecutor {
@@ -52,7 +58,18 @@ impl TaskExecutor {
         Self {
             workspace_path,
             timeout,
+            memory_processor: None,
         }
+    }
+
+    /// 设置记忆处理器
+    ///
+    /// # 参数
+    ///
+    /// * `processor` - 记忆处理器实例
+    pub fn with_memory_processor(mut self, processor: MemoryProcessor) -> Self {
+        self.memory_processor = Some(processor);
+        self
     }
 
     /// 执行任务
@@ -144,12 +161,35 @@ impl TaskExecutor {
         let stdout = String::new();
         let stderr = String::new();
 
-        Ok(ExecutionResult {
+        let result = ExecutionResult {
             success,
             stdout,
             stderr,
             exit_code,
-        })
+        };
+
+        // 如果配置了记忆处理器，在任务完成后触发记忆整理
+        if let Some(ref processor) = self.memory_processor {
+            debug!("触发记忆整理");
+
+            // 异步处理记忆，不阻塞主任务结果返回
+            let task_description = prompt.to_string();
+            let stdout_clone = result.stdout.clone();
+            let stderr_clone = result.stderr.clone();
+            let exit_code_clone = result.exit_code;
+            let processor_clone = processor.clone();
+
+            tokio::spawn(async move {
+                if let Err(e) = processor_clone
+                    .process_task_result(&task_description, &stdout_clone, &stderr_clone, exit_code_clone)
+                    .await
+                {
+                    warn!("记忆整理失败: {}", e);
+                }
+            });
+        }
+
+        Ok(result)
     }
 
     /// 获取工作区路径

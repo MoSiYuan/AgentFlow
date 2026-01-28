@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package agentflow;
+
+// gRPC 服务定义
+service NodeSync {
+  // Master 建立流，持续接收 Leader 指令，同时发送状态更新
+  rpc Connect (stream NodeUpdate) returns (stream LeaderCommand);
+}
+
+// Master 发送的状态更新
+message NodeUpdate {
+  string node_id = 1;
+  int64 timestamp = 2;
+
+  oneof payload {
+    TaskStatusUpdate task_update = 3;
+    SystemMetrics metrics = 4;
+    StallAlert alert = 5;
+  }
+}
+
+// 任务状态更新
+message TaskStatusUpdate {
+  string task_id = 1;
+  string status = 2;  // "pending" | "running" | "completed" | "failed"
+  string progress = 3;
+}
+
+// 系统资源指标
+message SystemMetrics {
+  double cpu_usage = 1;
+  double memory_usage = 2;
+  uint32 active_tasks = 3;
+}
+
+// 卡顿告警
+message StallAlert {
+  string task_id = 1;
+  string reason = 2;
+  int64 duration_ms = 3;
+}
+
+// Leader 下发的命令
+message LeaderCommand {
+  string command_id = 1;
+
+  oneof payload {
+    TaskRequest task_request = 2;
+    ControlSignal control = 3;
+  }
+}
+
+// 任务请求
+message TaskRequest {
+  string task_id = 1;
+  string prompt = 2;
+  string project_id = 3;
+}
+
+// 控制信号
+message ControlSignal {
+  string action = 1;  // "pause" | "resume" | "cancel"
+  string task_id = 2;
+}

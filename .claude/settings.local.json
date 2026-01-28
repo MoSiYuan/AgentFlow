@@ -103,7 +103,17 @@
       "Bash(cargo check:*)",
       "Bash(~/.cargo/bin/cargo:*)",
       "Bash(source:*)",
-      "Bash(cargo build:*)"
+      "Bash(cargo build:*)",
+      "Bash(git remote get-url:*)",
+      "Bash(cargo test:*)",
+      "Bash(SQLX_OFFLINE=true ~/.cargo/bin/cargo check:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(vite:*)",
+      "Bash(tsc:*)",
+      "Bash(/opt/homebrew/bin/npm:*)",
+      "Bash(./verify-distributed-build.sh:*)",
+      "Bash(/Users/jiangxiaolong/work/project/AgentFlow/rust/build-claude.sh:*)",
+      "Bash(cargo run:*)"
     ]
   }
 }

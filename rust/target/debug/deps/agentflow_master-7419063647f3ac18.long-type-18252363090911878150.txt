@@ -1,0 +1,2 @@
+fn(axum::extract::State<AuthConfig>, axum::extract::State<SessionStore>, axum::Json<LoginRequest>) -> impl futures::Future<Output = impl IntoResponse> {handle_login}
+fn(axum::extract::State<AuthConfig>, axum::extract::State<SessionStore>, axum::Json<LoginRequest>) -> impl futures::Future<Output = impl IntoResponse> {handle_login}: Handler<_, _>

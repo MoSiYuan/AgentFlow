@@ -1,7 +1,7 @@
 //! 健康检查 API 路由
 
 use agentflow_core::{ApiResponse, HealthResponse};
-use axum::{Json, State};
+use axum::{extract::State, Json};
 use chrono::Utc;
 use tracing::debug;
 
@@ -15,25 +15,33 @@ pub async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<Hea
     debug!("健康检查请求");
 
     // 计算运行时间（秒）
+    // 修复: chrono 0.4+ 中，DateTime 的差值是 TimeDelta，使用 num_seconds()
     let uptime = {
         let start = state.start_time;
         let now = Utc::now();
-        (now - start).num_seconds().max(0) as u64
+        let duration = now.signed_duration_since(start);
+        duration.num_seconds().max(0) as u64
     };
 
     // 检查任务执行器状态
-    let running_tasks = state.executor.get_running_tasks().await.len();
+    // 修复: 明确类型注解以解决类型推断问题
+    let running_tasks: Vec<i64> = state.executor.get_running_tasks().await;
+    let running_count = running_tasks.len();
 
     // 检查记忆统计
-    let memory_stats = state.memory.stats().await.unwrap_or_else(|_| crate::memory_core::MemoryStats {
-        total: 0,
-        active: 0,
-        expired: 0,
-        category_counts: std::collections::HashMap::new(),
-    });
+    // 修复: 明确类型注解以解决类型推断问题
+    let memory_stats = match state.memory.stats().await {
+        Ok(stats) => stats,
+        Err(_) => crate::memory_core::MemoryStats {
+            total: 0,
+            active: 0,
+            expired: 0,
+            category_counts: std::collections::HashMap::new(),
+        },
+    };
 
     let response = HealthResponse {
-        status: if running_tasks < state.executor.max_concurrent_tasks {
+        status: if running_count < state.executor.max_concurrent_tasks {
             "healthy".to_string()
         } else {
             "busy".to_string()
@@ -45,7 +53,7 @@ pub async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<Hea
 
     debug!(
         "健康检查: status={}, uptime={}s, running_tasks={}, memory_entries={}",
-        response.status, uptime, running_tasks, memory_stats.total
+        response.status, uptime, running_count, memory_stats.total
     );
 
     Json(ApiResponse {

@@ -23,14 +23,38 @@ AgentFlow v3 is a complete rewrite in Rust, featuring a revolutionary **single-p
 
 ## 🚀 Quick Start
 
-### 1. Install Rust
+### Option 1: One-Click Installation (Recommended)
+
+#### Linux/macOS
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MoSiYuan/AgentFlow/main/scripts/install.sh | bash
+```
+
+Or download and run manually:
+
+```bash
+wget https://raw.githubusercontent.com/MoSiYuan/AgentFlow/main/scripts/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+#### Windows
+
+```powershell
+irm https://raw.githubusercontent.com/MoSiYuan/AgentFlow/main/scripts/install.ps1 | iex
+```
+
+### Option 2: Build from Source
+
+#### 1. Install Rust
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source "$HOME/.cargo/env"
 ```
 
-### 2. Build AgentFlow
+#### 2. Build AgentFlow
 
 ```bash
 cd rust
@@ -38,7 +62,7 @@ export SQLX_OFFLINE=true
 cargo build --release
 ```
 
-### 3. Run AgentFlow
+#### 3. Run AgentFlow
 
 ```bash
 ./target/release/agentflow-master
@@ -47,6 +71,36 @@ cargo build --release
 Server will start on `http://localhost:6767`
 
 ## 📝 Usage Examples
+
+### Operating Modes
+
+AgentFlow supports three operating modes:
+
+#### 1. Local Mode (Default)
+
+Execute tasks locally using Claude CLI:
+
+```bash
+agentflow server local
+# or simply
+agentflow server
+```
+
+#### 2. Cloud Mode (with Webhooks)
+
+Integrate with AI platforms like Zhipu AI:
+
+```bash
+agentflow server cloud
+```
+
+#### 3. Planner-Only Mode
+
+Plan and validate tasks without execution:
+
+```bash
+agentflow server planner-only
+```
 
 ### Create a Task
 
@@ -72,6 +126,163 @@ curl -X POST http://localhost:6767/api/v1/tasks/1/execute \
 ```bash
 curl http://localhost:6767/api/v1/tasks/1
 ```
+
+## 🌐 Cloud Mode & Zhipu AI Integration
+
+AgentFlow can integrate with Zhipu AI (智谱清言) to create an AI-powered task orchestration system.
+
+### Quick Setup
+
+1. **Configure Zhipu AI Integration**
+
+Edit `~/.agentflow/config.toml`:
+
+```toml
+[server]
+port = 6767
+
+[webhook]
+enabled = true
+secret = "your-webhook-secret-key"
+
+[zhipu]
+enabled = true
+api_key = "your-zhipu-api-key"
+model = "glm-4"
+```
+
+2. **Start AgentFlow in Cloud Mode**
+
+```bash
+agentflow server cloud
+```
+
+3. **Setup Public URL** (for testing)
+
+```bash
+# Using ngrok
+ngrok http 6767
+# Output: https://abc123.ngrok.io
+```
+
+4. **Configure Zhipu AI Webhook**
+
+In Zhipu AI Console, set webhook URL to:
+```
+https://abc123.ngrok.io/api/v1/webhook
+```
+
+5. **Test Integration**
+
+Send a message through Zhipu AI:
+```
+"帮我创建一个任务，分析这个项目的代码结构"
+```
+
+AgentFlow will receive the webhook, create a task, execute it, and send the result back to Zhipu AI.
+
+### Example Webhook Request
+
+```json
+{
+  "event": "message.received",
+  "timestamp": "2026-01-28T10:30:00Z",
+  "data": {
+    "message_id": "msg_123",
+    "user_id": "user_abc",
+    "content": "帮我分析这个Go项目的代码结构",
+    "metadata": {
+      "source": "zhipu",
+      "model": "glm-4"
+    }
+  }
+}
+```
+
+### Detailed Documentation
+
+- **[ZHIPU_INTEGRATION.md](docs/ZHIPU_INTEGRATION.md)**: Complete Zhipu AI integration guide
+- **[CONFIGURATION.md](docs/CONFIGURATION.md)**: Full configuration reference
+
+---
+
+## ⚡ Distributed Execution Mode (NEW!)
+
+AgentFlow now supports **distributed parallel execution** with Master cluster, workflow orchestration, and intelligent scheduling! (v0.4.0)
+
+### Key Features
+
+- ✅ **Master Cluster** - Raft-based leader election and fault tolerance
+- ✅ **DAG Workflows** - Task dependency management and parallel execution
+- ✅ **Priority Queue** - Intelligent task scheduling (Urgent > High > Medium > Low)
+- ✅ **Worker Registry** - Health checking and load balancing
+- ✅ **Agent Communication** - Point-to-point and broadcast messaging
+- ✅ **Distributed Locks** - Cross-node coordination
+
+### Quick Start
+
+#### 1. Start Master Cluster (3 nodes)
+
+```bash
+# Terminal 1 - Master 1
+cargo run --bin agentflow-master -- \
+  --node-id master-1 --port 6767 \
+  --peers master-1:6767,master-2:6768,master-3:6769
+
+# Terminal 2 - Master 2
+cargo run --bin agentflow-master -- \
+  --node-id master-2 --port 6768 \
+  --peers master-1:6767,master-2:6768,master-3:6769
+
+# Terminal 3 - Master 3
+cargo run --bin agentflow-master -- \
+  --node-id master-3 --port 6769 \
+  --peers master-1:6767,master-2:6768,master-3:6769
+```
+
+#### 2. Create Workflow
+
+```bash
+curl -X POST http://localhost:6767/api/v1/workflows \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "ci-pipeline",
+    "tasks": [
+      {"id": "build", "dependencies": []},
+      {"id": "test", "dependencies": ["build"]},
+      {"id": "deploy", "dependencies": ["test"]}
+    ]
+  }'
+```
+
+#### 3. Check Cluster Status
+
+```bash
+# View current leader
+curl http://localhost:6767/api/v1/cluster/leader
+
+# View all nodes
+curl http://localhost:6767/api/v1/cluster/nodes
+
+# View workflow execution
+curl http://localhost:6767/api/v1/workflows/ci-pipeline
+```
+
+### Verification
+
+```bash
+cd rust
+./verify-distributed-build.sh
+```
+
+### Documentation
+
+- **[Distributed Execution System](docs/DISTRIBUTED_EXECUTION_SYSTEM.md)** - Complete system architecture and API reference
+- **[Quick Start Guide](docs/DISTRIBUTED_QUICK_START.md)** - 5-minute setup guide
+- **[Implementation Status](docs/DISTRIBUTED_EXECUTION_STATUS.md)** - Technical details and progress
+- **[README](rust/README_DISTRIBUTED.md)** - Feature overview and examples
+
+---
 
 ## 🏗️ Architecture
 
@@ -136,20 +347,67 @@ rust/
 
 ## 📚 Documentation
 
+### Getting Started
 - **[RUST_V3_QUICKSTART.md](RUST_V3_QUICKSTART.md)** - Quick start guide
-- **[RUST_V3_IMPLEMENTATION.md](RUST_V3_IMPLEMENTATION.md)** - Implementation details
-- **[RUST_V3_FINAL_REPORT.md](RUST_V3_FINAL_REPORT.md)** - Final report
+- **[CONFIGURATION.md](docs/CONFIGURATION.md)** - Complete configuration reference
+- **[ZHIPU_INTEGRATION.md](docs/ZHIPU_INTEGRATION.md)** - Zhipu AI integration guide
+
+### Technical Details
+- **[TEAM_A_IMPLEMENTATION_REPORT.md](docs/TEAM_A_IMPLEMENTATION_REPORT.md)** - Execution engine report
+- **[EXECUTOR_QUICK_REFERENCE.md](docs/EXECUTOR_QUICK_REFERENCE.md)** - Executor API reference
+- **[EXECUTOR_EXAMPLES.md](docs/EXECUTOR_EXAMPLES.md)** - Executor usage examples
+- **[API.md](rust/agentflow-master/API.md)** - REST API documentation
+
+### Historical
+- **[RUST_V3_FINAL_REPORT.md](docs/archive/v3-development/RUST_V3_FINAL_REPORT.md)** - Final development report
 
 ## 🔧 Configuration
 
-Environment variables (`.env` file):
+### Quick Configuration
+
+Create `~/.agentflow/config.toml`:
+
+```toml
+[server]
+port = 6767
+
+[database]
+url = "sqlite://agentflow.db"
+
+[executor]
+max_concurrent_tasks = 10
+task_timeout = 300
+
+[memory]
+backend = "memory"
+default_ttl = 3600
+
+[sandbox]
+enabled = true
+allow_network = false
+```
+
+### Environment Variables
+
+Alternatively, use environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AGENTFLOW_PORT` | 6767 | Server port |
-| `DATABASE_URL` | sqlite://agentflow.db | Database connection |
-| `RUST_LOG` | info | Log level |
+| `AGENTFLOW_SERVER_PORT` | 6767 | Server port |
+| `AGENTFLOW_SERVER_ADDR` | 0.0.0.0 | Server address |
+| `AGENTFLOW_DATABASE_URL` | sqlite://agentflow.db | Database connection |
+| `AGENTFLOW_LOG_LEVEL` | info | Log level |
+| `AGENTFLOW_MAX_CONCURRENT_TASKS` | 10 | Max concurrent tasks |
 | `SQLX_OFFLINE` | true | SQLx offline mode |
+
+### Configuration Priority
+
+1. Command-line arguments (highest)
+2. Environment variables
+3. Configuration file (`~/.agentflow/config.toml`)
+4. Default values (lowest)
+
+For complete configuration reference, see **[CONFIGURATION.md](docs/CONFIGURATION.md)**.
 
 ## 🔒 Security Features
 
@@ -168,7 +426,7 @@ Environment variables (`.env` file):
 
 ## 🆚 Historical Context
 
-AgentFlow v3 is the result of multiple iterations:
+AgentFlow v0.2.1 is the result of multiple iterations:
 
 - **v1.0**: Initial Node.js version with Master + Worker architecture
 - **v2.0**: Added Go version, memory system, and skills integration
@@ -176,12 +434,13 @@ AgentFlow v3 is the result of multiple iterations:
 
 **Previous versions** (Node.js and Go) are **archived** in `docs/archive/old-versions/` for historical reference.
 
-The Rust v3 version supersedes all previous versions with:
+The Rust v0.2.1 version supersedes all previous versions with:
 - **Simpler architecture** - Single process instead of Master + Worker
 - **Better performance** - Tokio async runtime, lower memory footprint
 - **Zero dependencies** - No need for Node.js runtime
 - **Enhanced security** - Complete sandbox and process isolation
 - **Cleaner codebase** - 176KB of source code vs 812KB (Node.js)
+- **Cloud integration** - Webhook support for AI platforms like Zhipu AI
 
 ## 🛠️ Development
 

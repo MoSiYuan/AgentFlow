@@ -130,7 +130,15 @@ impl TaskExecutor {
             "开始执行任务"
         );
 
-        // 构建命令
+        // 1. 如果配置了 git_manager，创建任务分支
+        let branch_name = if let Some(ref git_manager) = self.git_manager {
+            info!("Git 工作流：创建任务分支");
+            Some(git_manager.create_task_branch(None).await?)
+        } else {
+            None
+        };
+
+        // 2. 构建命令
         let mut cmd = Command::new("claude");
         cmd.arg(prompt)
             // 继承父进程的环境变量（包括 ANTHROPIC_API_KEY）
@@ -182,6 +190,30 @@ impl TaskExecutor {
             stderr,
             exit_code,
         };
+
+        // 3. 根据 CLI 执行结果处理 Git 分支
+        if let (Some(git_manager), Some(branch)) = (&self.git_manager, &branch_name) {
+            if result.success {
+                // 成功：保留分支，不删除
+                info!(
+                    branch = %branch,
+                    "任务成功，保留分支"
+                );
+            } else {
+                // 失败：清理分支
+                warn!(
+                    branch = %branch,
+                    "任务失败，清理分支"
+                );
+                // cleanup 不应影响主任务结果返回
+                let _ = git_manager.cleanup_on_failure(branch)
+                    .await
+                    .map_err(|e| {
+                        warn!("清理分支失败: {}", e);
+                        e
+                    });
+            }
+        }
 
         // 如果配置了记忆处理器，在任务完成后触发记忆整理
         if let Some(ref processor) = self.memory_processor {

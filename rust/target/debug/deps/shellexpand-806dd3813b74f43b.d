@@ -1,0 +1,10 @@
+/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/deps/shellexpand-806dd3813b74f43b.d: /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/lib.rs /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/strings.rs /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/wtraits.rs /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/funcs.rs
+
+/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/deps/libshellexpand-806dd3813b74f43b.rlib: /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/lib.rs /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/strings.rs /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/wtraits.rs /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/funcs.rs
+
+/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/deps/libshellexpand-806dd3813b74f43b.rmeta: /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/lib.rs /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/strings.rs /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/wtraits.rs /Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/funcs.rs
+
+/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/lib.rs:
+/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/strings.rs:
+/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/wtraits.rs:
+/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shellexpand-3.1.1/src/funcs.rs:

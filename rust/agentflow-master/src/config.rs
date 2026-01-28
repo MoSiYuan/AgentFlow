@@ -6,6 +6,21 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::env;
 
+/// 认证配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthConfig {
+    /// 是否启用认证
+    pub enabled: bool,
+    /// 用户名
+    pub username: String,
+    /// 密码
+    pub password: String,
+    /// Session 过期时间（秒）
+    pub session_ttl: u64,
+    /// API Key 密钥（用于 Master 之间通信）
+    pub api_key_secret: String,
+}
+
 /// Master 服务器配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MasterConfig {
@@ -19,6 +34,8 @@ pub struct MasterConfig {
     pub sandbox: SandboxConfig,
     /// Memory 配置
     pub memory: MemoryConfig,
+    /// 认证配置
+    pub auth: AuthConfig,
     /// 日志级别
     pub log_level: String,
     /// Worker 心跳超时（秒）
@@ -71,10 +88,23 @@ impl Default for MasterConfig {
             database_url: "sqlite://agentflow.db".to_string(),
             sandbox: SandboxConfig::default(),
             memory: MemoryConfig::default(),
+            auth: AuthConfig::default(),
             log_level: "info".to_string(),
             worker_heartbeat_timeout: 60,
             task_timeout: 300,
             max_concurrent_tasks: 10,
+        }
+    }
+}
+
+impl Default for AuthConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            username: "admin".to_string(),
+            password: "admin".to_string(),
+            session_ttl: 86400, // 24 hours
+            api_key_secret: "".to_string(), // 默认为空，表示不使用 API Key
         }
     }
 }
@@ -129,6 +159,9 @@ impl MasterConfig {
 
         // Memory 配置
         config.memory = MemoryConfig::from_env()?;
+
+        // Auth 配置
+        config.auth = AuthConfig::from_env()?;
 
         // 日志配置
         if let Ok(log_level) = env::var("AGENTFLOW_LOG_LEVEL") {
@@ -247,6 +280,97 @@ impl MemoryConfig {
         }
 
         Ok(config)
+    }
+}
+
+impl AuthConfig {
+    /// 从环境变量加载 Auth 配置
+    pub fn from_env() -> Result<Self> {
+        let mut config = Self::default();
+
+        if let Ok(enabled) = env::var("AUTH_ENABLED") {
+            config.enabled = enabled.parse()
+                .context("无效的 AUTH_ENABLED")?;
+        }
+
+        if let Ok(username) = env::var("AUTH_USERNAME") {
+            config.username = username;
+        }
+
+        if let Ok(password) = env::var("AUTH_PASSWORD") {
+            config.password = password;
+        }
+
+        if let Ok(ttl) = env::var("AUTH_SESSION_TTL") {
+            config.session_ttl = ttl.parse()
+                .context("无效的 AUTH_SESSION_TTL")?;
+        }
+
+        if let Ok(api_key_secret) = env::var("AUTH_API_KEY_SECRET") {
+            config.api_key_secret = api_key_secret;
+        }
+
+        Ok(config)
+    }
+
+    /// 生成 API Key (用于 Master 之间通信)
+    ///
+    /// API Key 格式: sk_{timestamp}_{signature}
+    /// signature = HMAC-SHA256(api_key_secret, timestamp)
+    pub fn generate_api_key(&self) -> Result<String> {
+        use hmac::{Hmac, Mac};
+        use sha2::Sha256;
+
+        if self.api_key_secret.is_empty() {
+            return Err(anyhow::anyhow!("API Key Secret 未配置，请设置 AUTH_API_KEY_SECRET 环境变量"));
+        }
+
+        let timestamp = chrono::Utc::now().timestamp();
+
+        // 使用 HMAC-SHA256 生成签名
+        let mut mac = Hmac::<Sha256>::new_from_slice(self.api_key_secret.as_bytes())
+            .map_err(|e| anyhow::anyhow!("HMAC 初始化失败: {}", e))?;
+        mac.update(timestamp.to_string().as_bytes());
+        let signature = mac.finalize().into_bytes();
+        let signature_hex = hex::encode(signature);
+
+        let api_key = format!("sk_{}_{}", timestamp, signature_hex);
+        Ok(api_key)
+    }
+
+    /// 验证 API Key
+    pub fn verify_api_key(&self, api_key: &str) -> Result<bool> {
+        use hmac::{Hmac, Mac};
+        use sha2::Sha256;
+
+        if self.api_key_secret.is_empty() {
+            return Ok(false);
+        }
+
+        // 解析 API Key: sk_{timestamp}_{signature}
+        let parts: Vec<&str> = api_key.split('_').collect();
+        if parts.len() != 3 || parts[0] != "sk" {
+            return Ok(false);
+        }
+
+        let timestamp: i64 = parts[1].parse()
+            .map_err(|_| anyhow::anyhow!("无效的时间戳"))?;
+        let provided_signature = parts[2];
+
+        // 检查时间戳是否在有效期内（5 分钟）
+        let now = chrono::Utc::now().timestamp();
+        if now - timestamp > 300 {
+            return Ok(false);
+        }
+
+        // 重新计算签名
+        let mut mac = Hmac::<Sha256>::new_from_slice(self.api_key_secret.as_bytes())
+            .map_err(|e| anyhow::anyhow!("HMAC 初始化失败: {}", e))?;
+        mac.update(timestamp.to_string().as_bytes());
+        let expected_signature = mac.finalize().into_bytes();
+        let expected_signature_hex = hex::encode(expected_signature);
+
+        Ok(provided_signature == expected_signature_hex)
     }
 }
 

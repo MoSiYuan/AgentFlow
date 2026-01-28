@@ -1,0 +1,10 @@
+[package]
+name = "test-claude"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+# 独立工作区
+
+[dependencies]
+shellexpand = "3.1"

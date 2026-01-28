@@ -12,8 +12,55 @@ use axum::{
 };
 use futures::stream::Stream;
 use serde_json::json;
+use sqlx::Row;
 use std::convert::Infallible;
 use tracing::{debug, error, info};
+
+// 辅助函数: 从数据库行转换为 Task
+fn row_to_task(row: &sqlx::sqlite::SqliteRow) -> Result<Task, anyhow::Error> {
+    use agentflow_core::{TaskStatus, TaskPriority};
+    use sqlx::Row;
+
+    // 从字符串解析状态
+    let status_str: String = row.get("status");
+    let status = match status_str.as_str() {
+        "pending" => TaskStatus::Pending,
+        "running" => TaskStatus::Running,
+        "completed" => TaskStatus::Completed,
+        "failed" => TaskStatus::Failed,
+        "blocked" => TaskStatus::Blocked,
+        _ => TaskStatus::Pending,
+    };
+
+    // 从 i32 转换优先级
+    let priority_i32: i32 = row.get("priority");
+    let priority = TaskPriority::from_i32(priority_i32);
+
+    Ok(Task {
+        id: row.get("id"),
+        task_id: row.get("task_id"),
+        parent_id: row.get("parent_id"),
+        title: row.get("title"),
+        description: row.get("description"),
+        group_name: row.get("group_name"),
+        completion_criteria: row.get("completion_criteria"),
+        status,
+        priority,
+        lock_holder: row.get("lock_holder"),
+        lock_time: row.get("lock_time"),
+        result: row.get("result"),
+        error: row.get("error"),
+        workspace_dir: row.get("workspace_dir"),
+        sandboxed: row.get::<i64, _>("sandboxed") != 0,
+        allow_network: row.get::<i64, _>("allow_network") != 0,
+        max_memory: row.get("max_memory"),
+        max_cpu: row.get("max_cpu"),
+        created_by: row.get("created_by"),
+        created_at: row.get("created_at"),
+        started_at: row.get("started_at"),
+        completed_at: row.get("completed_at"),
+    })
+}
 
 /// 创建任务
 ///
@@ -39,7 +86,8 @@ pub async fn create_task(
     let now = chrono::Utc::now();
 
     // 插入任务到数据库
-    let result = sqlx::query!(
+    // 修复: 使用 runtime query
+    let result = sqlx::query(
         r#"
         INSERT INTO tasks (
             task_id, parent_id, title, description, group_name,
@@ -48,33 +96,42 @@ pub async fn create_task(
             created_at, started_at, completed_at
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)
-        RETURNING id
-        "#,
-        task_id,
-        req.parent_id,
-        req.title,
-        req.description,
-        group_name,
-        req.completion_criteria,
-        TaskStatus::Pending,
-        priority.as_i32(),
-        req.workspace_dir,
-        req.sandboxed.unwrap_or(false),
-        req.allow_network.unwrap_or(false),
-        req.max_memory,
-        req.max_cpu,
-        req.created_by,
-        now
+        "#
     )
-    .fetch_one(&state.executor.db)
+    .bind(&task_id)
+    .bind(req.parent_id)
+    .bind(&req.title)
+    .bind(&req.description)
+    .bind(&group_name)
+    .bind(&req.completion_criteria)
+    .bind(TaskStatus::Pending.to_string())
+    .bind(priority.as_i32())
+    .bind(&req.workspace_dir)
+    .bind(req.sandboxed.unwrap_or(false) as i64)
+    .bind(req.allow_network.unwrap_or(false) as i64)
+    .bind(&req.max_memory)
+    .bind(req.max_cpu)
+    .bind(&req.created_by)
+    .bind(now)
+    .fetch_one(state.executor.db())
     .await
     .map_err(|e| {
         error!("创建任务失败: {}", e);
         ApiError::internal(format!("创建任务失败: {}", e))
     })?;
 
+    // 修复: 从 last_insert_rowid 获取插入的 ID，而不是从 result.id
+    let inserted_id = sqlx::query("SELECT last_insert_rowid() as id")
+        .fetch_one(state.executor.db())
+        .await
+        .map_err(|e| {
+            error!("获取插入 ID 失败: {}", e);
+            ApiError::internal(format!("获取插入 ID 失败: {}", e))
+        })?;
+    let id: i64 = inserted_id.get("id");
+
     let task = Task {
-        id: result.id,
+        id,
         task_id,
         parent_id: req.parent_id,
         title: req.title,
@@ -116,25 +173,29 @@ pub async fn get_task(
 ) -> Result<Json<ApiResponse<Task>>, ApiError> {
     debug!("获取任务: {}", id);
 
-    let task = sqlx::query_as!(
-        Task,
+    // 修复: 使用 runtime query
+    let row = sqlx::query(
         r#"
         SELECT
             id, task_id, parent_id, title, description, group_name,
-            completion_criteria, status as "status: TaskStatus",
-            priority as "priority: TaskPriority", lock_holder, lock_time, result, error,
+            completion_criteria, status, priority, lock_holder, lock_time, result, error,
             workspace_dir, sandboxed, allow_network, max_memory, max_cpu,
             created_by, created_at, started_at, completed_at
         FROM tasks
         WHERE id = ?
-        "#,
-        id
+        "#
     )
-    .fetch_one(&state.executor.db)
+    .bind(id)
+    .fetch_one(state.executor.db())
     .await
     .map_err(|e| {
         error!("获取任务失败: {}", e);
         ApiError::not_found(format!("任务 {} 不存在", id))
+    })?;
+
+    let task = row_to_task(&row).map_err(|e| {
+        error!("解析任务失败: {}", e);
+        ApiError::internal(format!("解析任务失败: {}", e))
     })?;
 
     Ok(Json(ApiResponse {
@@ -152,13 +213,12 @@ pub async fn list_tasks(
 ) -> Result<Json<ApiResponse<Vec<Task>>>, ApiError> {
     debug!("列出所有任务");
 
-    let tasks = sqlx::query_as!(
-        Task,
+    // 修复: 使用 runtime query
+    let rows = sqlx::query(
         r#"
         SELECT
             id, task_id, parent_id, title, description, group_name,
-            completion_criteria, status as "status: TaskStatus",
-            priority as "priority: TaskPriority", lock_holder, lock_time, result, error,
+            completion_criteria, status, priority, lock_holder, lock_time, result, error,
             workspace_dir, sandboxed, allow_network, max_memory, max_cpu,
             created_by, created_at, started_at, completed_at
         FROM tasks
@@ -166,11 +226,17 @@ pub async fn list_tasks(
         LIMIT 100
         "#
     )
-    .fetch_all(&state.executor.db)
+    .fetch_all(state.executor.db())
     .await
     .map_err(|e| {
         error!("列出任务失败: {}", e);
         ApiError::internal(format!("列出任务失败: {}", e))
+    })?;
+
+    let tasks: Result<Vec<Task>, _> = rows.iter().map(row_to_task).collect();
+    let tasks = tasks.map_err(|e| {
+        error!("解析任务列表失败: {}", e);
+        ApiError::internal(format!("解析任务列表失败: {}", e))
     })?;
 
     Ok(Json(ApiResponse {
@@ -186,47 +252,43 @@ pub async fn list_tasks(
 pub async fn execute_task(
     State(state): State<AppState>,
     Path(id): Path<i64>,
-) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+) -> Sse<impl Stream<Item = Result<Event, anyhow::Error>>> {
     info!("执行任务（SSE）: {}", id);
 
     // 创建 SSE 流
-    let stream = async_stream::stream! {
+    let stream = async_stream::try_stream! {
         // 发送开始事件
-        yield Ok(Event::default()
+        yield Event::default()
             .json_data(json!({
                 "type": "start",
                 "task_id": id,
                 "message": "开始执行任务"
-            }))
-        );
+            }))?;
 
         // 执行任务
         match state.executor.execute_task(id).await {
             Ok(result) => {
-                yield Ok(Event::default()
+                yield Event::default()
                     .json_data(json!({
                         "type": "progress",
                         "task_id": id,
                         "message": "任务执行中"
-                    }))
-                );
+                    }))?;
 
-                yield Ok(Event::default()
+                yield Event::default()
                     .json_data(json!({
                         "type": "complete",
                         "task_id": id,
                         "result": result
-                    }))
-                );
+                    }))?;
             }
             Err(e) => {
-                yield Ok(Event::default()
+                yield Event::default()
                     .json_data(json!({
                         "type": "error",
                         "task_id": id,
                         "error": e.to_string()
-                    }))
-                );
+                    }))?;
             }
         }
     };
@@ -248,32 +310,34 @@ pub async fn cancel_task(
     info!("取消任务: {}", id);
 
     // 检查任务是否存在
-    let task = sqlx::query_as!(
-        Task,
+    // 修复: 使用 runtime query
+    let row = sqlx::query(
         r#"
         SELECT
             id, task_id, parent_id, title, description, group_name,
-            completion_criteria, status as "status: TaskStatus",
-            priority as "priority: TaskPriority", lock_holder, lock_time, result, error,
+            completion_criteria, status, priority, lock_holder, lock_time, result, error,
             workspace_dir, sandboxed, allow_network, max_memory, max_cpu,
             created_by, created_at, started_at, completed_at
         FROM tasks
         WHERE id = ?
-        "#,
-        id
+        "#
     )
-    .fetch_optional(&state.executor.db)
+    .bind(id)
+    .fetch_optional(state.executor.db())
     .await
     .map_err(|e| {
         error!("查询任务失败: {}", e);
         ApiError::internal(format!("查询任务失败: {}", e))
     })?;
 
-    if task.is_none() {
+    if row.is_none() {
         return Err(ApiError::not_found(format!("任务 {} 不存在", id)));
     }
 
-    let task = task.unwrap();
+    let task = row_to_task(&row.unwrap()).map_err(|e| {
+        error!("解析任务失败: {}", e);
+        ApiError::internal(format!("解析任务失败: {}", e))
+    })?;
 
     // 只能取消运行中的任务
     if task.status != TaskStatus::Running {
@@ -285,7 +349,8 @@ pub async fn cancel_task(
 
     // 更新任务状态为已取消（使用 Blocked 状态表示）
     let now = chrono::Utc::now();
-    sqlx::query!(
+    // 修复: 使用 runtime query
+    sqlx::query(
         r#"
         UPDATE tasks
         SET status = ?,
@@ -293,12 +358,12 @@ pub async fn cancel_task(
             lock_holder = NULL,
             lock_time = NULL
         WHERE id = ?
-        "#,
-        TaskStatus::Blocked,
-        now,
-        id
+        "#
     )
-    .execute(&state.executor.db)
+    .bind(TaskStatus::Blocked.to_string())
+    .bind(now)
+    .bind(id)
+    .execute(state.executor.db())
     .await
     .map_err(|e| {
         error!("取消任务失败: {}", e);
@@ -323,8 +388,10 @@ pub async fn delete_task(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, ApiError> {
     info!("删除任务: {}", id);
 
-    let result = sqlx::query!("DELETE FROM tasks WHERE id = ?", id)
-        .execute(&state.executor.db)
+    // 修复: 使用 runtime query
+    let result = sqlx::query("DELETE FROM tasks WHERE id = ?")
+        .bind(id)
+        .execute(state.executor.db())
         .await
         .map_err(|e| {
             error!("删除任务失败: {}", e);

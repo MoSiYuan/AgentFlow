@@ -3,11 +3,15 @@
 //! 单进程架构的 Master 服务器，提供 HTTP API 和 WebSocket 支持
 //! 集成 TaskExecutor 和 MemoryCore，直接执行任务而无需远程 Worker
 
+mod claude;
+mod auth_middleware;
 mod config;
 mod error;
 mod executor;
+// mod leader;  // Temporarily disabled due to proto dependency
 mod memory_core;
 mod routes;
+mod webhook;
 
 use anyhow::{Context, Result};
 use axum::{
@@ -16,6 +20,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use tower_http::services::{ServeDir, ServeFile};
 use chrono::Utc;
 use clap::Parser;
 use routes::AppState;
@@ -50,6 +55,10 @@ struct Args {
     /// 日志级别
     #[arg(short, long, default_value = "info")]
     log_level: String,
+
+    /// 运行模式: "master" 或 "leader"
+    #[arg(long, default_value = "master")]
+    mode: String,
 }
 
 #[tokio::main]
@@ -70,6 +79,19 @@ async fn main() -> Result<()> {
     config.server_port = args.port;
     config.log_level = args.log_level;
 
+    // 根据模式启动不同的节点
+    match args.mode.as_str() {
+        "leader" => {
+            anyhow::bail!("Leader 模式暂时禁用，因为缺少 proto 模块依赖");
+        }
+        "master" => {
+            info!("🎯 启动 Master 模式");
+        }
+        _ => {
+            anyhow::bail!("未知的运行模式: {}, 只支持 'master'", args.mode);
+        }
+    }
+
     info!("📋 配置加载完成");
     info!("   - 服务器地址: {}", config.bind_address());
     info!("   - 数据库: {}", config.database_url);
@@ -88,10 +110,16 @@ async fn main() -> Result<()> {
     let memory = MemoryCore::new(config.memory.default_ttl as i64, config.memory.max_entries);
     info!("🧠 记忆核心已创建");
 
+    // 创建 Session 存储
+    let session_store = auth_middleware::SessionStore::new();
+    info!("🔐 Session 存储已创建");
+
     // 创建应用状态
     let app_state = AppState {
         executor: executor.clone(),
         memory: memory.clone(),
+        auth_config: config.auth.clone(),
+        session_store,
         start_time: Utc::now(),
     };
 
@@ -202,12 +230,43 @@ async fn create_app(state: AppState) -> Result<Router> {
         .allow_methods(Any)
         .allow_headers(Any);
 
+    // React Dashboard 静态文件服务
+    let spa_service = ServeDir::new("dashboard/dist")
+        .fallback(ServeFile::new("dashboard/dist/index.html"));
+
     // 创建路由
     let app = Router::new()
-        // 合并所有 API 路由
-        .merge(routes::create_routes())
-        // 静态文件服务（可选）
+        // 登录 API (公开访问)
+        .route("/api/v1/login", post(auth_middleware::handle_login))
+        // 健康检查 (公开访问)
+        .route("/health", get(routes::health::health_check))
+        .route("/api/v1/health", get(routes::health::health_check))
+        // API 路由 (需要认证)
+        .route("/api/v1/tasks", post(routes::tasks::create_task).get(routes::tasks::list_tasks))
+        .route(
+            "/api/v1/tasks/:id",
+            get(routes::tasks::get_task).delete(routes::tasks::delete_task),
+        )
+        .route("/api/v1/tasks/:id/execute", post(routes::tasks::execute_task))
+        .route("/api/v1/tasks/:id/cancel", post(routes::tasks::cancel_task))
+        .route(
+            "/api/v1/memory/search",
+            get(routes::memory::search_memory).post(routes::memory::search_memory),
+        )
+        .route("/api/v1/memory/:key", get(routes::memory::get_memory).delete(routes::memory::delete_memory))
+        .route("/api/v1/memory/stats", get(routes::memory::memory_stats))
+        .route("/ws/task/:id", get(routes::websocket::task_websocket))
+        // Webhook 路由 (公开访问，有独立验证)
+        .merge(webhook::create_routes())
+        // 静态文件服务 (公开访问)
         .nest_service("/static", tower_http::services::ServeDir::new("static"))
+        // SPA 路由: 所有其他路径都返回 index.html
+        .fallback_service(spa_service)
+        // 添加认证中间件到 API 路由
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::auth_middleware,
+        ))
         // 添加状态
         .with_state(state)
         // 添加 CORS

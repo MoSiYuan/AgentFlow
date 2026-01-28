@@ -1,6 +1,7 @@
 //! 记忆核心系统
 //!
-//! 实现基于 SQLite 的向量索引和语义检索功能
+//! 实现基于 SQLite 的记忆索引和检索功能
+//! 注意：不使用外部嵌入模型，而是依赖 Claude CLI 的语义理解能力
 
 use crate::types::{MemoryCategory, MemoryEntry};
 use anyhow::{Context, Result};
@@ -11,7 +12,8 @@ use tracing::{debug, info, warn};
 
 /// 记忆核心系统
 ///
-/// 提供基于 SQLite 的记忆索引和语义检索功能
+/// 提供基于 SQLite 的记忆索引和关键词检索功能
+/// 依赖 Claude CLI 的语义理解能力，无需外部嵌入模型
 pub struct MemoryCore {
     /// SQLite 连接池
     pool: SqlitePool,
@@ -135,7 +137,7 @@ impl MemoryCore {
 
     /// 索引新的记忆条目
     ///
-    /// 将记忆条目存储到数据库中，并生成向量嵌入以支持语义检索
+    /// 将记忆条目存储到数据库中
     ///
     /// # 参数
     /// * `entry` - 要索引的记忆条目
@@ -174,22 +176,18 @@ impl MemoryCore {
         // 将 category 转换为字符串
         let category_str = format!("{:?}", entry.category);
 
-        // 计算简单的文本嵌入（基于特征哈希）
-        // 注意：这是一个简化的实现，生产环境应使用专门的嵌入模型
-        let embedding = self.compute_embedding(&value_str).await?;
-
         // 插入或更新记忆条目
+        // 注意：embedding 字段保留但暂不使用（未来可能用于真正的向量检索）
         sqlx::query(
             r#"
             INSERT INTO memories (key, value, category, task_id, timestamp, expires_at, embedding)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL)
             ON CONFLICT(key) DO UPDATE SET
                 value = ?2,
                 category = ?3,
                 task_id = ?4,
                 timestamp = ?5,
-                expires_at = ?6,
-                embedding = ?7
+                expires_at = ?6
             "#,
         )
         .bind(&entry.key)
@@ -198,7 +196,6 @@ impl MemoryCore {
         .bind(&entry.task_id)
         .bind(entry.timestamp)
         .bind(entry.expires_at)
-        .bind(&embedding)
         .execute(&self.pool)
         .await
         .context("插入记忆条目失败")?;
@@ -207,16 +204,16 @@ impl MemoryCore {
         Ok(())
     }
 
-    /// 语义相似度检索
+    /// 关键词检索
     ///
-    /// 根据查询文本检索语义相似的记忆条目
+    /// 根据查询文本检索相关的记忆条目（使用 SQL LIKE 匹配）
     ///
     /// # 参数
     /// * `query` - 查询文本
     /// * `limit` - 返回的最大结果数量
     ///
     /// # 返回
-    /// 返回按相似度排序的记忆条目列表
+    /// 返回按时间戳排序的记忆条目列表
     ///
     /// # 示例
     /// ```no_run
@@ -229,27 +226,30 @@ impl MemoryCore {
     /// # }
     /// ```
     pub async fn search(&self, query: &str, limit: usize) -> Result<Vec<MemoryEntry>> {
-        debug!("执行语义检索: query={}, limit={}", query, limit);
+        debug!("执行关键词检索: query={}, limit={}", query, limit);
 
-        // 计算查询的嵌入向量
-        let query_embedding = self.compute_embedding(query).await?;
+        // 使用 SQL LIKE 进行关键词匹配
+        let pattern = format!("%{}%", query);
 
-        // 从数据库获取所有记忆条目
         let rows = sqlx::query(
             r#"
-            SELECT key, value, category, task_id, timestamp, expires_at, embedding
+            SELECT key, value, category, task_id, timestamp, expires_at
             FROM memories
-            WHERE expires_at IS NULL OR expires_at > ?
+            WHERE (value LIKE ?1 OR key LIKE ?1)
+              AND (expires_at IS NULL OR expires_at > ?2)
             ORDER BY timestamp DESC
-            "#,
+            LIMIT ?3
+            "#
         )
+        .bind(&pattern)
         .bind(chrono::Utc::now().timestamp())
+        .bind(limit as i64)
         .fetch_all(&self.pool)
         .await
         .context("查询记忆条目失败")?;
 
-        // 计算相似度并排序
-        let mut results: Vec<(MemoryEntry, f64)> = Vec::new();
+        // 解析结果
+        let mut results = Vec::new();
 
         for row in rows {
             let key: String = row.get("key");
@@ -258,7 +258,6 @@ impl MemoryCore {
             let task_id: Option<String> = row.get("task_id");
             let timestamp: i64 = row.get("timestamp");
             let expires_at: Option<i64> = row.get("expires_at");
-            let embedding_blob: Option<Vec<u8>> = row.get("embedding");
 
             // 解析 value
             let value: serde_json::Value = serde_json::from_str(&value_str)
@@ -283,27 +282,10 @@ impl MemoryCore {
                 timestamp,
             };
 
-            // 计算相似度
-            let similarity = if let Some(embedding) = embedding_blob {
-                self.cosine_similarity(&query_embedding, &embedding)
-            } else {
-                0.0
-            };
-
-            results.push((entry, similarity));
+            results.push(entry);
         }
 
-        // 按相似度降序排序
-        results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-
-        // 保留前 N 个结果
-        let results: Vec<MemoryEntry> = results
-            .into_iter()
-            .take(limit)
-            .map(|(entry, _)| entry)
-            .collect();
-
-        debug!("语义检索完成，返回 {} 条结果", results.len());
+        debug!("关键词检索完成，返回 {} 条结果", results.len());
         Ok(results)
     }
 
@@ -404,60 +386,14 @@ impl MemoryCore {
         Ok(count)
     }
 
-    /// 计算文本嵌入向量
+    /// 计算文本嵌入向量（已弃用）
     ///
-    /// 这是一个简化的实现，使用特征哈希生成固定长度的向量
-    /// 生产环境应使用专门的嵌入模型（如 OpenAI embeddings）
-    async fn compute_embedding(&self, text: &str) -> Result<Vec<u8>> {
-        // 使用简单的哈希算法生成嵌入向量
-        // 这不是真正的语义嵌入，仅用于演示
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
-        let mut hasher = DefaultHasher::new();
-        text.hash(&mut hasher);
-        let hash = hasher.finish();
-
-        // 将哈希值转换为 256 维向量（简化版本）
-        let mut embedding = vec![0u8; 256];
-        for (i, byte) in hash.to_be_bytes().iter().enumerate() {
-            embedding[i % 256] = *byte;
-        }
-
-        Ok(embedding)
-    }
-
-    /// 计算余弦相似度
-    ///
-    /// # 参数
-    /// * `a` - 第一个向量
-    /// * `b` - 第二个向量
-    ///
-    /// # 返回
-    /// 返回余弦相似度（0-1 之间）
-    fn cosine_similarity(&self, a: &[u8], b: &[u8]) -> f64 {
-        if a.len() != b.len() || a.is_empty() {
-            return 0.0;
-        }
-
-        let mut dot_product = 0i64;
-        let mut norm_a = 0i64;
-        let mut norm_b = 0i64;
-
-        for i in 0..a.len() {
-            let val_a = a[i] as i64;
-            let val_b = b[i] as i64;
-            dot_product += val_a * val_b;
-            norm_a += val_a * val_a;
-            norm_b += val_b * val_b;
-        }
-
-        let denominator = (norm_a as f64).sqrt() * (norm_b as f64).sqrt();
-        if denominator == 0.0 {
-            0.0
-        } else {
-            dot_product as f64 / denominator
-        }
+    /// 注意：此方法已弃用，我们不再使用向量嵌入
+    /// 而是依赖 Claude CLI 的语义理解能力和关键词匹配
+    #[deprecated(note = "使用关键词匹配替代向量嵌入")]
+    async fn compute_embedding(&self, _text: &str) -> Result<Vec<u8>> {
+        // 返回空向量，表示不使用嵌入
+        Ok(Vec::new())
     }
 
     /// 获取记忆统计信息

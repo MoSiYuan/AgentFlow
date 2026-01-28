@@ -10,6 +10,7 @@ pub use killer::ProcessKiller;
 pub use memory_processor::MemoryProcessor;
 pub use prompt_builder::{PromptBuilder, PromptBuilderConfig};
 
+use crate::git::BranchManager;
 use anyhow::{Context, Result};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -37,12 +38,15 @@ pub struct ExecutionResult {
 /// - 工作目录设置（Git 沙箱路径）
 /// - 实时输出捕获
 /// - 超时控制
+/// - 自动化 Git 工作流（创建/清理分支）
 /// - 任务完成后自动整理记忆（可选）
 pub struct TaskExecutor {
     /// 工作区路径（Git 沙箱目录）
     workspace_path: PathBuf,
     /// 执行超时时间
     timeout: Duration,
+    /// Git 分支管理器（可选）
+    git_manager: Option<BranchManager>,
     /// 记忆处理器（可选）
     memory_processor: Option<MemoryProcessor>,
 }
@@ -58,8 +62,19 @@ impl TaskExecutor {
         Self {
             workspace_path,
             timeout,
+            git_manager: None,
             memory_processor: None,
         }
+    }
+
+    /// 设置 Git 分支管理器
+    ///
+    /// # 参数
+    ///
+    /// * `git_manager` - Git 分支管理器实例
+    pub fn with_git_manager(mut self, git_manager: BranchManager) -> Self {
+        self.git_manager = Some(git_manager);
+        self
     }
 
     /// 设置记忆处理器

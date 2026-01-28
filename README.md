@@ -21,6 +21,61 @@ AgentFlow v3 is a complete rewrite in Rust, featuring a revolutionary **single-p
 - ✅ **REST API** - 14 HTTP endpoints
 - ✅ **Real-time** - WebSocket and SSE streaming support
 
+## 📚 Documentation
+
+### Quick Navigation
+
+**快速试用**：
+- [部署指南](DEPLOYMENT_GUIDE.md) - 快速安装和配置
+- [Rust v3 快速开始](RUST_V3_QUICKSTART.md) - 本地开发试用
+
+**集成与部署**：
+- [技能集成指南](docs/SKILL_INTEGRATION.md) - 作为 skill 集成到其他系统
+- [生产部署指南](docs/DEPLOYMENT.md) - 生产环境部署（systemd/Docker/K8s）
+- [集群部署指南](docs/CLUSTERING.md) - 多节点集群部署方案
+
+**深入理解**：
+- [系统架构](docs/ARCHITECTURE.md) - 架构设计和组件说明
+- [功能特性](docs/FEATURES.md) - 完整功能列表
+- [认证系统](AUTH_GUIDE.md) - 双认证系统使用指南
+
+**用户指南**：
+- [Agent 使用指南](docs/AGENT_USAGE_GUIDE.md) - 分场景使用说明
+- [版本路线图](docs/VERSION_ROADMAP.md) - 版本规划
+
+### 📖 Documentation Structure
+
+```mermaid
+mindmap
+  root((AgentFlow 文档))
+    快速开始
+      安装 Rust
+      编译 & 启动
+      基本调用示例
+    作为 Skill 安装
+      前置依赖
+      典型宿主类型
+      HTTP 接入示例
+      嵌入式库接入示例
+    独立部署
+      本地二进制部署
+      Docker 部署
+      K8s 部署
+      进程守护 & 日志
+      监控 & 健康检查
+    集群部署
+      单机多实例
+      多机多实例
+      共享队列(计划中)
+      共享记忆(计划中)
+    附录
+      故障排查
+      安全配置
+      性能调优
+```
+
+---
+
 ## 🚀 Quick Start
 
 ### Option 1: One-Click Installation (Recommended)
@@ -462,6 +517,49 @@ cargo test
 ```bash
 cargo run --bin agentflow-master
 ```
+
+## ⚠️ Current Architecture Limitations
+
+**重要说明**: v3.0 采用单进程架构，适用于以下场景：
+
+### ✅ 适用场景
+
+- **个人助手**: 本地运行的 AI 工作助手
+- **小型团队**: 单机部署，支持多用户并发访问
+- **任务执行**: 通过 REST API 调用的异步任务执行器
+- **嵌入集成**: 作为 Rust 库或 HTTP 服务嵌入到其他系统
+
+### ⚠️ 当前限制
+
+1. **单机架构**
+   - 当前版本为单进程、单机 SQLite 存储
+   - 多实例部署时，任务队列和记忆存储暂不共享
+   - 适合单机多实例（通过外部 LB 分发任务）
+
+2. **存储隔离**
+   - 每个实例拥有独立的 SQLite 数据库
+   - 任务和记忆不跨实例同步
+   - 适合无状态服务模式
+
+3. **分布式能力**
+   - 当前版本不支持内置的分布式队列
+   - 不支持跨节点的共享记忆
+   - 如需分布式能力，建议：
+     - 使用外部任务队列（Redis/RabbitMQ）
+     - 使用外部向量数据库（Qdrant/Milvus）
+
+### 🚧 未来规划
+
+**v3.1+ 版本将支持**：
+
+- **分布式任务队列**: Redis/RabbitMQ 集成
+- **共享记忆存储**: 集中式向量数据库
+- **集群管理**: 自动发现和负载均衡
+- **高可用**: 主备切换和故障恢复
+
+详见: [集群部署指南](docs/CLUSTERING.md)
+
+---
 
 ## 📄 License
 

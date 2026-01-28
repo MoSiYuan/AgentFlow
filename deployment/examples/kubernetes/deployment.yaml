@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentflow-master
+  namespace: agentflow
+  labels:
+    app: agentflow-master
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: agentflow-master
+
+  template:
+    metadata:
+      labels:
+        app: agentflow-master
+        version: v1.0
+
+    spec:
+      containers:
+      - name: agentflow-master
+        image: agentflow-master:v1.0
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 6767
+          name: http
+        - containerPort: 8849
+          name: websocket
+
+        env:
+        - name: AGENTFLOW_SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: agentflow-config
+              key: AGENTFLOW_SERVER_PORT
+
+        - name: AGENTFLOW_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: agentflow-config
+              key: AGENTFLOW_LOG_LEVEL
+
+        - name: AUTH_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: agentflow-config
+              key: AUTH_ENABLED
+
+        - name: AUTH_USERNAME
+          value: "admin"
+
+        - name: AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: agentflow-secret
+              key: AUTH_PASSWORD
+
+        - name: AUTH_API_KEY_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: agentflow-secret
+              key: AUTH_API_KEY_SECRET
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50M
+          limits:
+            cpu: 500m
+            memory: 100M
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 6767
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 6767
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 2
+
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/agentflow
+        - name: logs
+          mountPath: /var/log/agentflow
+
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}

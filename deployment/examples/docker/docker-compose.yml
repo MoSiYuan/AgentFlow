@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  agentflow-master:
+    image: agentflow-master:v1.0
+    container_name: agentflow-master
+    restart: unless-stopped
+
+    environment:
+      - AGENTFLOW_SERVER_PORT=6767
+      - AGENTFLOW_LOG_LEVEL=info
+      - AUTH_ENABLED=true
+      - AUTH_USERNAME=admin
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-admin}
+      - AUTH_API_KEY_SECRET=${AUTH_API_KEY_SECRET}
+
+    ports:
+      - "6767:6767"
+      - "8849:8849"
+
+    volumes:
+      # 数据持久化
+      - agentflow-data:/var/lib/agentflow
+      - agentflow-logs:/var/log/agentflow
+
+      # 配置文件挂载（可选）
+      # - ./config/agentflow.env:/etc/default/agentflow:ro
+
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 100M
+        reservations:
+          cpus: '0.25'
+          memory: 50M
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:6767/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  agentflow-data:
+  agentflow-logs:

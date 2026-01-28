@@ -99,7 +99,10 @@
       "Bash(file:*)",
       "Bash(./node_modules/.bin/tsc:*)",
       "Bash(/opt/homebrew/bin/node:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(cargo check:*)",
+      "Bash(~/.cargo/bin/cargo:*)",
+      "Bash(source:*)"
     ]
   }
 }

@@ -1,0 +1,52 @@
+[workspace]
+members = [
+    "agentflow-core",
+    "agentflow-master",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.2.0"
+edition = "2024"
+authors = ["AgentFlow Team"]
+license = "MIT"
+repository = "https://github.com/MoSiYuan/AgentFlow"
+description = "AgentFlow - AI Agent Task Collaboration System (Rust Edition)"
+
+[workspace.dependencies]
+# 异步运行时
+tokio = { version = "1.42", features = ["full"] }
+async-trait = "0.1"
+
+# Web 框架
+axum = { version = "0.8", features = ["ws"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+
+# 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# 数据库
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite", "chrono", "uuid"] }
+
+# HTTP 客户端
+reqwest = { version = "0.12", features = ["json"] }
+
+# 工具库
+anyhow = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# 日期时间
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID
+uuid = { version = "1.11", features = ["v4", "serde"] }
+
+# 环境变量
+dotenvy = "0.15"
+
+# CLI
+clap = { version = "4.5", features = ["derive"] }

@@ -275,6 +275,11 @@ export interface WorkerConfig {
   task_timeout: number;
   retry_on_failure: boolean;
   max_retries: number;
+
+  // Skills configuration
+  skills_paths?: string[];         // Additional skills directories
+  skills_auto_discover?: boolean;  // Auto-discover skills (default: true)
+  skills_enabled?: boolean;        // Enable skills integration (default: true)
 }
 
 /**

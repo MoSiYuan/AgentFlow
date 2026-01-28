@@ -1324,3 +1324,6 @@ export class AgentFlowDatabase {
 }
 
 export default AgentFlowDatabase;
+
+// Export memory system schema
+export * from './memory-schema';

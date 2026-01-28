@@ -98,7 +98,8 @@
       "Bash(for:*)",
       "Bash(file:*)",
       "Bash(./node_modules/.bin/tsc:*)",
-      "Bash(/opt/homebrew/bin/node:*)"
+      "Bash(/opt/homebrew/bin/node:*)",
+      "Bash(wc:*)"
     ]
   }
 }

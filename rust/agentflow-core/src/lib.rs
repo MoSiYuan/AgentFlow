@@ -8,10 +8,14 @@ pub mod memory;
 pub mod sandbox;
 pub mod executor;
 pub mod git;
+pub mod paths;
 
 pub use types::*;
 pub use database::*;
-pub use memory::*;
+// Don't glob-import memory to avoid conflicts with types
+pub use memory::{MemoryCore, WorkerMemory, WorkerMemoryConfig, WorkerMemoryStats};
+pub use memory::persistent::{PersistentMemory, TaskContext};
 pub use sandbox::*;
 pub use executor::*;
 pub use git::*;
+pub use paths::*;

@@ -12,7 +12,12 @@ use axum::{
     Router,
 };
 
-use crate::{AppState, executor::TaskExecutor, memory_core::MemoryCore};
+use crate::{
+    auth_middleware::SessionStore,
+    config::AuthConfig,
+    executor::TaskExecutor,
+    memory_core::MemoryCore,
+};
 
 /// 创建 API 路由
 pub fn create_routes() -> Router<AppState> {
@@ -20,6 +25,8 @@ pub fn create_routes() -> Router<AppState> {
         // 健康检查
         .route("/health", get(health::health_check))
         .route("/api/v1/health", get(health::health_check))
+        // 登录 API (无需认证)
+        .route("/api/v1/login", post(crate::auth_middleware::handle_login))
         // 任务管理 API
         .route("/api/v1/tasks", post(tasks::create_task).get(tasks::list_tasks))
         .route(
@@ -46,6 +53,10 @@ pub struct AppState {
     pub executor: TaskExecutor,
     /// 记忆核心
     pub memory: MemoryCore,
+    /// 认证配置
+    pub auth_config: AuthConfig,
+    /// Session 存储
+    pub session_store: SessionStore,
     /// 服务器启动时间
     pub start_time: chrono::DateTime<chrono::Utc>,
 }

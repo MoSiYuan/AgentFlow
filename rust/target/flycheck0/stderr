@@ -1,18 +1,5 @@
-     Locking 2 packages to latest compatible versions
-      Adding tokio-tungstenite v0.28.0
-      Adding tungstenite v0.28.0
-   0.176503958s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint: stale: changed "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core/src/types.rs"
-   0.176872292s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint:           (vs) "/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-core-395eda2b5854722a/dep-lib-agentflow_core"
-   0.176877167s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1769559005, nanos: 537152122 } < FileTime { seconds: 1769559511, nanos: 318427473 }
-   0.177636083s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint: fingerprint dirty for agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("agentflow_core", ["lib"], "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core/src/lib.rs", Edition2024) }
-   0.177845333s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-core-395eda2b5854722a/dep-lib-agentflow_core", reference_mtime: FileTime { seconds: 1769559005, nanos: 537152122 }, stale: "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core/src/types.rs", stale_mtime: FileTime { seconds: 1769559511, nanos: 318427473 } }))
-   0.214739125s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint: stale: changed "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core/src/types.rs"
-   0.214749333s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint:           (vs) "/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-core-72dff804baa97e0c/dep-test-lib-agentflow_core"
-   0.214751583s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1769559005, nanos: 537314289 } < FileTime { seconds: 1769559511, nanos: 318427473 }
-   0.215025042s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint: fingerprint dirty for agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("agentflow_core", ["lib"], "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core/src/lib.rs", Edition2024) }
-   0.215036250s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-core-72dff804baa97e0c/dep-test-lib-agentflow_core", reference_mtime: FileTime { seconds: 1769559005, nanos: 537314289 }, stale: "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core/src/types.rs", stale_mtime: FileTime { seconds: 1769559511, nanos: 318427473 } }))
-   0.227086167s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow_master"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("agentflow_master", ["lib"], "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/src/lib.rs", Edition2024) }
-   0.227109500s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow_master"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-96696150dec2cd52/lib-agentflow_master`
+   0.180162917s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("agentflow_core", ["lib"], "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core/src/lib.rs", Edition2024) }
+   0.180189875s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-core-f3e557af1f68a12a/lib-agentflow_core`
 
 Caused by:
     No such file or directory (os error 2)
@@ -35,8 +22,8 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.242523375s  INFO prepare_target{force=false package_id=axum v0.8.8 target="axum"}: cargo::core::compiler::fingerprint: fingerprint error for axum v0.8.8/Check { test: false }/TargetInner { ..: lib_target("axum", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.8/src/lib.rs", Edition2021) }
-   0.242541125s  INFO prepare_target{force=false package_id=axum v0.8.8 target="axum"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/axum-c85de8dc1bf20aa7/lib-axum`
+   0.187191625s  INFO prepare_target{force=false package_id=sqlx v0.8.6 target="sqlx"}: cargo::core::compiler::fingerprint: fingerprint error for sqlx v0.8.6/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("sqlx", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-0.8.6/src/lib.rs", Edition2021) }
+   0.187214792s  INFO prepare_target{force=false package_id=sqlx v0.8.6 target="sqlx"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/sqlx-bde55c749343a334/lib-sqlx`
 
 Caused by:
     No such file or directory (os error 2)
@@ -60,8 +47,8 @@ Stack backtrace:
   15: std::rt::lang_start::<()>::{closure#0}
   16: std::rt::lang_start_internal
   17: _main
-   0.248061250s  INFO prepare_target{force=false package_id=tokio-tungstenite v0.28.0 target="tokio_tungstenite"}: cargo::core::compiler::fingerprint: fingerprint error for tokio-tungstenite v0.28.0/Check { test: false }/TargetInner { ..: lib_target("tokio_tungstenite", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.28.0/src/lib.rs", Edition2018) }
-   0.248079750s  INFO prepare_target{force=false package_id=tokio-tungstenite v0.28.0 target="tokio_tungstenite"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/tokio-tungstenite-e66683d657bbf46c/lib-tokio_tungstenite`
+   0.187982375s  INFO prepare_target{force=false package_id=sqlx-core v0.8.6 target="sqlx_core"}: cargo::core::compiler::fingerprint: fingerprint error for sqlx-core v0.8.6/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("sqlx_core", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-core-0.8.6/src/lib.rs", Edition2021) }
+   0.187993042s  INFO prepare_target{force=false package_id=sqlx-core v0.8.6 target="sqlx_core"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/sqlx-core-fb7b459cab8cd3bb/lib-sqlx_core`
 
 Caused by:
     No such file or directory (os error 2)
@@ -86,8 +73,8 @@ Stack backtrace:
   16: std::rt::lang_start::<()>::{closure#0}
   17: std::rt::lang_start_internal
   18: _main
-   0.248505958s  INFO prepare_target{force=false package_id=tungstenite v0.28.0 target="tungstenite"}: cargo::core::compiler::fingerprint: fingerprint error for tungstenite v0.28.0/Check { test: false }/TargetInner { ..: lib_target("tungstenite", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tungstenite-0.28.0/src/lib.rs", Edition2021) }
-   0.248512250s  INFO prepare_target{force=false package_id=tungstenite v0.28.0 target="tungstenite"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/tungstenite-3cc30c44d5b4e1c0/lib-tungstenite`
+   0.191684500s  INFO prepare_target{force=false package_id=sha2 v0.10.9 target="sha2"}: cargo::core::compiler::fingerprint: fingerprint error for sha2 v0.10.9/Check { test: false }/TargetInner { ..: lib_target("sha2", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha2-0.10.9/src/lib.rs", Edition2018) }
+   0.191696292s  INFO prepare_target{force=false package_id=sha2 v0.10.9 target="sha2"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/sha2-f5655d3a65868256/lib-sha2`
 
 Caused by:
     No such file or directory (os error 2)
@@ -113,8 +100,62 @@ Stack backtrace:
   17: std::rt::lang_start::<()>::{closure#0}
   18: std::rt::lang_start_internal
   19: _main
-   0.257037958s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow_master"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("agentflow_master", ["lib"], "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/src/lib.rs", Edition2024) }
-   0.257056417s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow_master"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-41b4307344142c1a/test-lib-agentflow_master`
+   0.192172042s  INFO prepare_target{force=false package_id=digest v0.10.7 target="digest"}: cargo::core::compiler::fingerprint: fingerprint error for digest v0.10.7/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("digest", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/digest-0.10.7/src/lib.rs", Edition2018) }
+   0.192177667s  INFO prepare_target{force=false package_id=digest v0.10.7 target="digest"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/digest-b9afbe3cd99d15b7/lib-digest`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: cargo::core::compiler::compile
+   9: cargo::core::compiler::compile
+  10: <cargo::core::compiler::build_runner::BuildRunner>::compile
+  11: cargo::ops::cargo_compile::compile_ws
+  12: cargo::ops::cargo_compile::compile_with_exec
+  13: cargo::ops::cargo_compile::compile
+  14: cargo::commands::check::exec
+  15: <cargo::cli::Exec>::exec
+  16: cargo::main
+  17: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  18: std::rt::lang_start::<()>::{closure#0}
+  19: std::rt::lang_start_internal
+  20: _main
+   0.202046000s  INFO prepare_target{force=false package_id=sqlx-sqlite v0.8.6 target="sqlx_sqlite"}: cargo::core::compiler::fingerprint: fingerprint error for sqlx-sqlite v0.8.6/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("sqlx_sqlite", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-sqlite-0.8.6/src/lib.rs", Edition2021) }
+   0.202062333s  INFO prepare_target{force=false package_id=sqlx-sqlite v0.8.6 target="sqlx_sqlite"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/sqlx-sqlite-f1d03e53084bdfbe/lib-sqlx_sqlite`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   9: cargo::ops::cargo_compile::compile_ws
+  10: cargo::ops::cargo_compile::compile_with_exec
+  11: cargo::ops::cargo_compile::compile
+  12: cargo::commands::check::exec
+  13: <cargo::cli::Exec>::exec
+  14: cargo::main
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  16: std::rt::lang_start::<()>::{closure#0}
+  17: std::rt::lang_start_internal
+  18: _main
+   0.203607125s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("agentflow_core", ["lib"], "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core/src/lib.rs", Edition2024) }
+   0.203617583s  INFO prepare_target{force=false package_id=agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core) target="agentflow_core"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-core-5bef0449aad06056/test-lib-agentflow_core`
 
 Caused by:
     No such file or directory (os error 2)
@@ -137,8 +178,8 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.258259000s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow-master"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: false }/TargetInner { name: "agentflow-master", doc: true, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/src/main.rs", Edition2024) }
-   0.258267917s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow-master"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-b1f3ac58a05eb286/bin-agentflow-master`
+   0.211240167s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow_master"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("agentflow_master", ["lib"], "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/src/lib.rs", Edition2024) }
+   0.211255375s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow_master"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-a11d57a8a905df80/lib-agentflow_master`
 
 Caused by:
     No such file or directory (os error 2)
@@ -161,8 +202,238 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.259544625s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow-master"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: true }/TargetInner { name: "agentflow-master", doc: true, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/src/main.rs", Edition2024) }
-   0.259559042s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow-master"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-a116d9a6c893a08f/test-bin-agentflow-master`
+   0.213788875s  INFO prepare_target{force=false package_id=axum v0.8.8 target="axum"}: cargo::core::compiler::fingerprint: fingerprint error for axum v0.8.8/Check { test: false }/TargetInner { ..: lib_target("axum", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.8/src/lib.rs", Edition2021) }
+   0.213798958s  INFO prepare_target{force=false package_id=axum v0.8.8 target="axum"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/axum-dcb4b094245e9dcc/lib-axum`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   8: cargo::ops::cargo_compile::compile_ws
+   9: cargo::ops::cargo_compile::compile_with_exec
+  10: cargo::ops::cargo_compile::compile
+  11: cargo::commands::check::exec
+  12: <cargo::cli::Exec>::exec
+  13: cargo::main
+  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  15: std::rt::lang_start::<()>::{closure#0}
+  16: std::rt::lang_start_internal
+  17: _main
+   0.216226458s  INFO prepare_target{force=false package_id=sha1 v0.10.6 target="sha1"}: cargo::core::compiler::fingerprint: fingerprint error for sha1 v0.10.6/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("sha1", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha1-0.10.6/src/lib.rs", Edition2018) }
+   0.216234208s  INFO prepare_target{force=false package_id=sha1 v0.10.6 target="sha1"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/sha1-b46e5a86b844c70b/lib-sha1`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   9: cargo::ops::cargo_compile::compile_ws
+  10: cargo::ops::cargo_compile::compile_with_exec
+  11: cargo::ops::cargo_compile::compile
+  12: cargo::commands::check::exec
+  13: <cargo::cli::Exec>::exec
+  14: cargo::main
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  16: std::rt::lang_start::<()>::{closure#0}
+  17: std::rt::lang_start_internal
+  18: _main
+   0.216523292s  INFO prepare_target{force=false package_id=tokio-tungstenite v0.28.0 target="tokio_tungstenite"}: cargo::core::compiler::fingerprint: fingerprint error for tokio-tungstenite v0.28.0/Check { test: false }/TargetInner { ..: lib_target("tokio_tungstenite", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.28.0/src/lib.rs", Edition2018) }
+   0.216528542s  INFO prepare_target{force=false package_id=tokio-tungstenite v0.28.0 target="tokio_tungstenite"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/tokio-tungstenite-95fe957806189c11/lib-tokio_tungstenite`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   9: cargo::ops::cargo_compile::compile_ws
+  10: cargo::ops::cargo_compile::compile_with_exec
+  11: cargo::ops::cargo_compile::compile
+  12: cargo::commands::check::exec
+  13: <cargo::cli::Exec>::exec
+  14: cargo::main
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  16: std::rt::lang_start::<()>::{closure#0}
+  17: std::rt::lang_start_internal
+  18: _main
+   0.216849333s  INFO prepare_target{force=false package_id=tungstenite v0.28.0 target="tungstenite"}: cargo::core::compiler::fingerprint: fingerprint error for tungstenite v0.28.0/Check { test: false }/TargetInner { ..: lib_target("tungstenite", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tungstenite-0.28.0/src/lib.rs", Edition2021) }
+   0.216856167s  INFO prepare_target{force=false package_id=tungstenite v0.28.0 target="tungstenite"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/tungstenite-1253c0c33a6b3a09/lib-tungstenite`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: cargo::core::compiler::compile
+   9: <cargo::core::compiler::build_runner::BuildRunner>::compile
+  10: cargo::ops::cargo_compile::compile_ws
+  11: cargo::ops::cargo_compile::compile_with_exec
+  12: cargo::ops::cargo_compile::compile
+  13: cargo::commands::check::exec
+  14: <cargo::cli::Exec>::exec
+  15: cargo::main
+  16: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  17: std::rt::lang_start::<()>::{closure#0}
+  18: std::rt::lang_start_internal
+  19: _main
+   0.218650708s  INFO prepare_target{force=false package_id=headers v0.4.1 target="headers"}: cargo::core::compiler::fingerprint: fingerprint error for headers v0.4.1/Check { test: false }/TargetInner { ..: lib_target("headers", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/headers-0.4.1/src/lib.rs", Edition2018) }
+   0.218655375s  INFO prepare_target{force=false package_id=headers v0.4.1 target="headers"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/headers-a306a1909aa81559/lib-headers`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   8: cargo::ops::cargo_compile::compile_ws
+   9: cargo::ops::cargo_compile::compile_with_exec
+  10: cargo::ops::cargo_compile::compile
+  11: cargo::commands::check::exec
+  12: <cargo::cli::Exec>::exec
+  13: cargo::main
+  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  15: std::rt::lang_start::<()>::{closure#0}
+  16: std::rt::lang_start_internal
+  17: _main
+   0.219026875s  INFO prepare_target{force=false package_id=hex v0.4.3 target="hex"}: cargo::core::compiler::fingerprint: fingerprint error for hex v0.4.3/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("hex", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hex-0.4.3/src/lib.rs", Edition2018) }
+   0.219034458s  INFO prepare_target{force=false package_id=hex v0.4.3 target="hex"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/hex-64f60605c93e59df/lib-hex`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   8: cargo::ops::cargo_compile::compile_ws
+   9: cargo::ops::cargo_compile::compile_with_exec
+  10: cargo::ops::cargo_compile::compile
+  11: cargo::commands::check::exec
+  12: <cargo::cli::Exec>::exec
+  13: cargo::main
+  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  15: std::rt::lang_start::<()>::{closure#0}
+  16: std::rt::lang_start_internal
+  17: _main
+   0.219217042s  INFO prepare_target{force=false package_id=hmac v0.12.1 target="hmac"}: cargo::core::compiler::fingerprint: fingerprint error for hmac v0.12.1/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("hmac", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/lib.rs", Edition2018) }
+   0.219236292s  INFO prepare_target{force=false package_id=hmac v0.12.1 target="hmac"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/hmac-962b0fbe13f193d3/lib-hmac`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   8: cargo::ops::cargo_compile::compile_ws
+   9: cargo::ops::cargo_compile::compile_with_exec
+  10: cargo::ops::cargo_compile::compile
+  11: cargo::commands::check::exec
+  12: <cargo::cli::Exec>::exec
+  13: cargo::main
+  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  15: std::rt::lang_start::<()>::{closure#0}
+  16: std::rt::lang_start_internal
+  17: _main
+   0.220716833s  INFO prepare_target{force=false package_id=tokio-tungstenite v0.26.2 target="tokio_tungstenite"}: cargo::core::compiler::fingerprint: fingerprint error for tokio-tungstenite v0.26.2/Check { test: false }/TargetInner { ..: lib_target("tokio_tungstenite", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.26.2/src/lib.rs", Edition2018) }
+   0.220728792s  INFO prepare_target{force=false package_id=tokio-tungstenite v0.26.2 target="tokio_tungstenite"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/tokio-tungstenite-1dc12885a7d77279/lib-tokio_tungstenite`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   8: cargo::ops::cargo_compile::compile_ws
+   9: cargo::ops::cargo_compile::compile_with_exec
+  10: cargo::ops::cargo_compile::compile
+  11: cargo::commands::check::exec
+  12: <cargo::cli::Exec>::exec
+  13: cargo::main
+  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  15: std::rt::lang_start::<()>::{closure#0}
+  16: std::rt::lang_start_internal
+  17: _main
+   0.221066917s  INFO prepare_target{force=false package_id=tungstenite v0.26.2 target="tungstenite"}: cargo::core::compiler::fingerprint: fingerprint error for tungstenite v0.26.2/Check { test: false }/TargetInner { ..: lib_target("tungstenite", ["lib"], "/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tungstenite-0.26.2/src/lib.rs", Edition2021) }
+   0.221073417s  INFO prepare_target{force=false package_id=tungstenite v0.26.2 target="tungstenite"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/tungstenite-b78a838b65defd4b/lib-tungstenite`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   9: cargo::ops::cargo_compile::compile_ws
+  10: cargo::ops::cargo_compile::compile_with_exec
+  11: cargo::ops::cargo_compile::compile
+  12: cargo::commands::check::exec
+  13: <cargo::cli::Exec>::exec
+  14: cargo::main
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  16: std::rt::lang_start::<()>::{closure#0}
+  17: std::rt::lang_start_internal
+  18: _main
+   0.222872125s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow_master"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("agentflow_master", ["lib"], "/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/src/lib.rs", Edition2024) }
+   0.222882250s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow_master"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-51a059211b59defe/test-lib-agentflow_master`
 
 Caused by:
     No such file or directory (os error 2)
@@ -185,8 +456,8 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.260627667s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="integration_test"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: true }/TargetInner { kind: "test", name: "integration_test", benched: false, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/tests/integration_test.rs", Edition2024) }
-   0.260635917s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="integration_test"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-ba5f419cd2c0c82c/test-integration-test-integration_test`
+   0.224114667s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow-master"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: false }/TargetInner { name: "agentflow-master", doc: true, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/src/main.rs", Edition2024) }
+   0.224121625s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow-master"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-65d09e2df21ca5e5/bin-agentflow-master`
 
 Caused by:
     No such file or directory (os error 2)
@@ -209,8 +480,8 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.262271958s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="client"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: false }/TargetInner { kind: "example", name: "client", tested: false, benched: false, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/examples/client.rs", Edition2024) }
-   0.262291667s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="client"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-bf18e653a84cec43/example-client`
+   0.225294083s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow-master"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: true }/TargetInner { name: "agentflow-master", doc: true, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/src/main.rs", Edition2024) }
+   0.225302417s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="agentflow-master"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-1a42c3d89c299fcc/test-bin-agentflow-master`
 
 Caused by:
     No such file or directory (os error 2)
@@ -233,11 +504,145 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
+   0.226449875s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="communication_test"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: true }/TargetInner { kind: "test", name: "communication_test", benched: false, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/tests/communication_test.rs", Edition2024) }
+   0.226456583s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="communication_test"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-4b760c7f731d593e/test-integration-test-communication_test`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.227612292s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="integration_test"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: true }/TargetInner { kind: "test", name: "integration_test", benched: false, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/tests/integration_test.rs", Edition2024) }
+   0.227619125s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="integration_test"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-4055802a34f584ca/test-integration-test-integration_test`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.229027417s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="client"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: false }/TargetInner { kind: "example", name: "client", tested: false, benched: false, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/examples/client.rs", Edition2024) }
+   0.229036792s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="client"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-ebe4914df8e564d3/example-client`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.230359208s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="leader_example"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: false }/TargetInner { kind: "example", name: "leader_example", tested: false, benched: false, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/examples/leader_example.rs", Edition2024) }
+   0.230366458s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="leader_example"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-c4b5afc0fddc23d6/example-leader_example`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.231617333s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="master_client_example"}: cargo::core::compiler::fingerprint: fingerprint error for agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)/Check { test: false }/TargetInner { kind: "example", name: "master_client_example", tested: false, benched: false, ..: with_path("/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master/examples/master_client_example.rs", Edition2024) }
+   0.231625208s  INFO prepare_target{force=false package_id=agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master) target="master_client_example"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/jiangxiaolong/work/project/AgentFlow/rust/target/debug/.fingerprint/agentflow-master-ae55605aad127eed/example-master_client_example`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+    Checking digest v0.10.7
+    Checking hex v0.4.3
+    Checking sha1 v0.10.6
+    Checking sha2 v0.10.9
+    Checking hmac v0.12.1
     Checking tungstenite v0.28.0
-    Checking agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core)
+    Checking tungstenite v0.26.2
+    Checking headers v0.4.1
+    Checking sqlx-core v0.8.6
     Checking tokio-tungstenite v0.28.0
+    Checking tokio-tungstenite v0.26.2
     Checking axum v0.8.8
+    Checking sqlx-sqlite v0.8.6
+    Checking sqlx v0.8.6
+    Checking agentflow-core v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-core)
     Checking agentflow-master v0.2.0 (/Users/jiangxiaolong/work/project/AgentFlow/rust/agentflow-master)
-error: could not compile `agentflow-master` (lib) due to 42 previous errors; 1 warning emitted
+error: could not compile `agentflow-master` (lib test) due to 3 previous errors; 16 warnings emitted
 warning: build failed, waiting for other jobs to finish...
-error: could not compile `agentflow-master` (lib test) due to 42 previous errors; 1 warning emitted
+error: could not compile `agentflow-master` (example "leader_example") due to 1 previous error
+error: could not compile `agentflow-master` (example "master_client_example") due to 3 previous errors
+error: could not compile `agentflow-master` (example "client") due to 1 previous error
+error: could not compile `agentflow-master` (test "communication_test") due to 3 previous errors

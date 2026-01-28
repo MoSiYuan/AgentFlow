@@ -335,36 +335,6 @@ impl PromptBuilder {
     /// ```no_run
     /// # use agentflow_core::executor::PromptBuilder;
     /// # use agentflow_core::memory::MemoryCore;
-    /// #
-    /// # async fn example() {
-    /// # let builder = PromptBuilder::new();
-    /// # let memory_core = MemoryCore::new("memory.db").await.unwrap();
-    /// let task = "修复登录 bug";
-    /// let prompt = builder.build_with_memory_search(&task, &memory_core).await;
-    /// # }
-    /// ```
-    pub async fn build_with_memory_search(
-        &self,
-        task: &str,
-        memory_core: &MemoryCore,
-    ) -> String {
-        debug!("构建带自动记忆检索的 Prompt: task={}", task);
-
-        // 搜索相关记忆（top 3）
-        let memories = match memory_core.search(task, 3).await {
-            Ok(m) => {
-                debug!("检索到 {} 条相关记忆", m.len());
-                m
-            }
-            Err(e) => {
-                warn!("记忆检索失败: {}, 使用空记忆", e);
-                Vec::new()
-            }
-        };
-
-        // 调用现有的 build 方法
-        self.build(task, &memories)
-    }
 
     /// 构建系统指令部分
     fn build_system_section(&self) -> String {

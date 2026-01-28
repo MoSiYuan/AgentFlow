@@ -3,6 +3,12 @@
 //! 实现基于 SQLite 的记忆索引和检索功能
 //! 注意：不使用外部嵌入模型，而是依赖 Claude CLI 的语义理解能力
 
+pub mod persistent;
+pub mod worker;
+
+pub use worker::{WorkerMemory, WorkerMemoryConfig, WorkerMemoryStats};
+pub use persistent::{PersistentMemory, TaskContext};
+
 use crate::types::{MemoryCategory, MemoryEntry};
 use anyhow::{Context, Result};
 use sqlx::{Row, SqlitePool, sqlite::SqliteConnectOptions};

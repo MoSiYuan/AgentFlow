@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agentflow-config
+  namespace: agentflow
+data:
+  AGENTFLOW_SERVER_PORT: "6767"
+  AGENTFLOW_LOG_LEVEL: "info"
+  AUTH_ENABLED: "true"

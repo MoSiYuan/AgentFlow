@@ -33,3 +33,26 @@ futures = "0.3"
 tokio-tungstenite = "0.26"
 headers = "0.4"
 async-stream = "0.3"
+
+# Cryptography
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+
+# Graph algorithms for task dependencies
+petgraph = "0.6"
+
+# Serialization
+bincode = "1.3"
+
+# Claude CLI integration
+which = "7.0"
+shellexpand = "3.1"
+
+# gRPC dependencies
+tonic = "0.12"
+prost = "0.13"
+tokio-stream = "0.1"
+
+[build-dependencies]
+tonic-build = "0.12"

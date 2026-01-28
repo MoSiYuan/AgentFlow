@@ -13,6 +13,7 @@ use axum::{
 };
 use futures::{sink::SinkExt, stream::StreamExt};
 use serde_json::json;
+use sqlx::Row;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, error, info};
@@ -43,8 +44,9 @@ async fn handle_task_websocket(socket: WebSocket, state: AppState, task_id: i64)
         "message": "WebSocket 连接已建立"
     });
 
+    // 修复: axum 0.8+ 版本中 Message::Text 需要 Utf8Bytes 类型，使用 .into() 转换
     if let Err(e) = sender
-        .send(Message::Text(welcome_msg.to_string()))
+        .send(Message::Text(welcome_msg.to_string().into()))
         .await
     {
         error!("发送欢迎消息失败: {}", e);
@@ -80,8 +82,9 @@ async fn handle_task_websocket(socket: WebSocket, state: AppState, task_id: i64)
                                     "task_id": task_id
                                 });
 
-                                let sender = sender.read().await;
-                                if let Err(e) = sender.send(Message::Text(pong_msg.to_string())).await {
+                                // 修复: 需要使用 write_guard 而不是 read_guard
+                                let mut sender = sender.write().await;
+                                if let Err(e) = sender.send(Message::Text(pong_msg.to_string().into())).await {
                                     error!("发送 pong 消息失败: {}", e);
                                     break;
                                 }
@@ -119,15 +122,16 @@ async fn monitor_task_execution(
     sender: Arc<RwLock<futures::stream::SplitSink<WebSocket, Message>>>,
 ) -> Result<(), anyhow::Error> {
     // 检查任务是否存在
-    let task = sqlx::query!(
+    // 修复: 使用 runtime query
+    let task = sqlx::query(
         r#"
         SELECT id, task_id, status, title, started_at, completed_at
         FROM tasks
         WHERE id = ?
-        "#,
-        task_id
+        "#
     )
-    .fetch_optional(&state.executor.db)
+    .bind(task_id)
+    .fetch_optional(state.executor.db())
     .await?;
 
     if task.is_none() {
@@ -137,8 +141,9 @@ async fn monitor_task_execution(
             "error": "任务不存在"
         });
 
-        let sender = sender.write().await;
-        sender.send(Message::Text(error_msg.to_string())).await?;
+        let mut sender_guard = sender.write().await;
+        // 修复: 添加 .into() 转换 String 为 Utf8Bytes
+        sender_guard.send(Message::Text(error_msg.to_string().into())).await?;
         return Err(anyhow::anyhow!("任务不存在"));
     }
 
@@ -148,17 +153,18 @@ async fn monitor_task_execution(
     let status_msg = json!({
         "type": "status",
         "task_id": task_id,
-        "status": format!("{:?}", task.status),
-        "title": task.title
+        "status": task.get::<String, _>("status"),
+        "title": task.get::<String, _>("title")
     });
 
     {
-        let sender = sender.write().await;
-        sender.send(Message::Text(status_msg.to_string())).await?;
+        let mut sender_guard = sender.write().await;
+        // 修复: 添加 .into() 转换 String 为 Utf8Bytes
+        sender_guard.send(Message::Text(status_msg.to_string().into())).await?;
     }
 
     // 如果任务正在运行，开始监控
-    if task.status.to_string() == "Running" {
+    if task.get::<String, _>("status") == "Running" {
         // 模拟任务进度更新
         for progress in 1..=5 {
             tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
@@ -170,60 +176,67 @@ async fn monitor_task_execution(
                 "message": format!("执行进度: {}%", progress * 20)
             });
 
-            let sender = sender.write().await;
-            sender.send(Message::Text(progress_msg.to_string())).await?;
+            let mut sender_guard = sender.write().await;
+            // 修复: 添加 .into() 转换 String 为 Utf8Bytes
+            sender_guard.send(Message::Text(progress_msg.to_string().into())).await?;
         }
 
         // 检查任务最终状态
-        let final_task = sqlx::query!(
+        // 修复: 使用 runtime query
+        let final_task = sqlx::query(
             r#"
             SELECT id, status, result, error, completed_at
             FROM tasks
             WHERE id = ?
-            "#,
-            task_id
+            "#
         )
-        .fetch_optional(&state.executor.db)
+        .bind(task_id)
+        .fetch_optional(state.executor.db())
         .await?;
 
         if let Some(final_task) = final_task {
-            let completion_msg = if final_task.error.is_some() {
+            let error_val: Option<String> = final_task.get("error");
+            let completion_msg = if error_val.is_some() {
                 json!({
                     "type": "failed",
                     "task_id": task_id,
-                    "error": final_task.error
+                    "error": final_task.get::<String, _>("error")
                 })
             } else {
                 json!({
                     "type": "completed",
                     "task_id": task_id,
-                    "result": final_task.result
+                    "result": final_task.get::<Option<String>, _>("result")
                 })
             };
 
-            let sender = sender.write().await;
-            sender.send(Message::Text(completion_msg.to_string())).await?;
+            let mut sender_guard = sender.write().await;
+            // 修复: 添加 .into() 转换 String 为 Utf8Bytes
+            sender_guard.send(Message::Text(completion_msg.to_string().into())).await?;
         }
-    } else if task.status.to_string() == "Completed" {
+    } else if task.get::<String, _>("status") == "Completed" {
         // 任务已完成
         let completed_msg = json!({
             "type": "completed",
             "task_id": task_id,
-            "result": task.result
+            "result": task.get::<Option<String>, _>("result")
         });
 
-        let sender = sender.write().await;
-        sender.send(Message::Text(completed_msg.to_string())).await?;
-    } else if task.status.to_string() == "Failed" {
+        let mut sender_guard = sender.write().await;
+        // 修复: 添加 .into() 转换 String 为 Utf8Bytes
+        sender_guard.send(Message::Text(completed_msg.to_string().into())).await?;
+    } else if task.get::<String, _>("status") == "Failed" {
         // 任务失败
+        let error_val: Option<String> = task.get("error");
         let failed_msg = json!({
             "type": "failed",
             "task_id": task_id,
-            "error": task.error.unwrap_or_else(|| "未知错误".to_string())
+            "error": error_val.unwrap_or_else(|| "未知错误".to_string())
         });
 
-        let sender = sender.write().await;
-        sender.send(Message::Text(failed_msg.to_string())).await?;
+        let mut sender_guard = sender.write().await;
+        // 修复: 添加 .into() 转换 String 为 Utf8Bytes
+        sender_guard.send(Message::Text(failed_msg.to_string().into())).await?;
     }
 
     Ok(())

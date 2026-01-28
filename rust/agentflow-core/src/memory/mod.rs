@@ -88,7 +88,10 @@ impl MemoryCore {
                 timestamp INTEGER NOT NULL,
                 expires_at INTEGER,
                 embedding BLOB,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                domain TEXT NOT NULL DEFAULT 'public',
+                namespace TEXT NOT NULL DEFAULT 'default',
+                pushed_targets TEXT DEFAULT '[]'
             )
             "#,
         )
@@ -137,6 +140,27 @@ impl MemoryCore {
         .await
         .context("创建 timestamp 索引失败")?;
 
+        // 新增：domain 和 namespace 索引
+        sqlx::query(
+            r#"
+            CREATE INDEX IF NOT EXISTS idx_memories_domain
+            ON memories(domain)
+            "#,
+        )
+        .execute(&self.pool)
+        .await
+        .context("创建 domain 索引失败")?;
+
+        sqlx::query(
+            r#"
+            CREATE INDEX IF NOT EXISTS idx_memories_namespace
+            ON memories(namespace)
+            "#,
+        )
+        .execute(&self.pool)
+        .await
+        .context("创建 namespace 索引失败")?;
+
         debug!("数据库表结构初始化完成");
         Ok(())
     }
@@ -166,6 +190,9 @@ impl MemoryCore {
     ///     category: MemoryCategory::Result,
     ///     task_id: Some("task_123".to_string()),
     ///     timestamp: chrono::Utc::now().timestamp(),
+    ///     domain: crate::types::MemoryDomain::Public,
+    ///     namespace: "default".to_string(),
+    ///     pushed_targets: vec![],
     /// };
     ///
     /// memory.index(&entry).await?;
@@ -173,7 +200,8 @@ impl MemoryCore {
     /// # }
     /// ```
     pub async fn index(&self, entry: &MemoryEntry) -> Result<()> {
-        debug!("索引记忆条目: key={}, category={:?}", entry.key, entry.category);
+        debug!("索引记忆条目: key={}, category={:?}, domain={:?}",
+               entry.key, entry.category, entry.domain);
 
         // 将 value 序列化为 JSON 字符串
         let value_str = serde_json::to_string(&entry.value)
@@ -182,18 +210,34 @@ impl MemoryCore {
         // 将 category 转换为字符串
         let category_str = format!("{:?}", entry.category);
 
+        // 将 domain 转换为字符串
+        let domain_str = match entry.domain {
+            crate::types::MemoryDomain::Private => "private",
+            crate::types::MemoryDomain::Public => "public",
+        };
+
+        // 序列化 pushed_targets
+        let pushed_targets_str = serde_json::to_string(&entry.pushed_targets)
+            .context("序列化 pushed_targets 失败")?;
+
         // 插入或更新记忆条目
         // 注意：embedding 字段保留但暂不使用（未来可能用于真正的向量检索）
         sqlx::query(
             r#"
-            INSERT INTO memories (key, value, category, task_id, timestamp, expires_at, embedding)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL)
+            INSERT INTO memories (
+                key, value, category, task_id, timestamp, expires_at, embedding,
+                domain, namespace, pushed_targets
+            )
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL, ?7, ?8, ?9)
             ON CONFLICT(key) DO UPDATE SET
                 value = ?2,
                 category = ?3,
                 task_id = ?4,
                 timestamp = ?5,
-                expires_at = ?6
+                expires_at = ?6,
+                domain = ?7,
+                namespace = ?8,
+                pushed_targets = ?9
             "#,
         )
         .bind(&entry.key)
@@ -202,17 +246,24 @@ impl MemoryCore {
         .bind(&entry.task_id)
         .bind(entry.timestamp)
         .bind(entry.expires_at)
+        .bind(&domain_str)
+        .bind(&entry.namespace)
+        .bind(&pushed_targets_str)
         .execute(&self.pool)
         .await
         .context("插入记忆条目失败")?;
 
-        debug!("记忆条目索引成功: {}", entry.key);
+        debug!("记忆条目索引成功: {} (domain={})", entry.key, domain_str);
         Ok(())
     }
 
     /// 关键词检索
     ///
     /// 根据查询文本检索相关的记忆条目（使用 SQL LIKE 匹配）
+    ///
+    /// **记忆域隔离策略**：
+    /// 1. 先查私域记忆，如果有高置信度结果 → 直接返回（不走网络）
+    /// 2. 私域没有足够结果 → 再查公域记忆
     ///
     /// # 参数
     /// * `query` - 查询文本
@@ -239,11 +290,11 @@ impl MemoryCore {
 
         let rows = sqlx::query(
             r#"
-            SELECT key, value, category, task_id, timestamp, expires_at
+            SELECT key, value, category, task_id, timestamp, expires_at, domain, namespace, pushed_targets
             FROM memories
             WHERE (value LIKE ?1 OR key LIKE ?1)
               AND (expires_at IS NULL OR expires_at > ?2)
-            ORDER BY timestamp DESC
+            ORDER BY domain ASC, timestamp DESC
             LIMIT ?3
             "#
         )
@@ -264,6 +315,9 @@ impl MemoryCore {
             let task_id: Option<String> = row.get("task_id");
             let timestamp: i64 = row.get("timestamp");
             let expires_at: Option<i64> = row.get("expires_at");
+            let domain_str: String = row.get("domain");
+            let namespace: String = row.get("namespace");
+            let pushed_targets_str: String = row.get("pushed_targets");
 
             // 解析 value
             let value: serde_json::Value = serde_json::from_str(&value_str)
@@ -279,6 +333,17 @@ impl MemoryCore {
                 _ => MemoryCategory::Context,
             };
 
+            // 解析 domain
+            let domain = match domain_str.as_str() {
+                "private" => crate::types::MemoryDomain::Private,
+                "public" => crate::types::MemoryDomain::Public,
+                _ => crate::types::MemoryDomain::Public,
+            };
+
+            // 解析 pushed_targets
+            let pushed_targets: Vec<String> = serde_json::from_str(&pushed_targets_str)
+                .unwrap_or_default();
+
             let entry = MemoryEntry {
                 key,
                 value,
@@ -286,12 +351,119 @@ impl MemoryCore {
                 category,
                 task_id,
                 timestamp,
+                domain,
+                namespace,
+                pushed_targets,
             };
 
             results.push(entry);
         }
 
         debug!("关键词检索完成，返回 {} 条结果", results.len());
+        Ok(results)
+    }
+
+    /// 带域过滤的关键词检索
+    ///
+    /// 根据查询文本和记忆域检索相关的记忆条目
+    ///
+    /// # 参数
+    /// * `query` - 查询文本
+    /// * `domain` - 记忆域过滤（None = 搜索所有域）
+    /// * `limit` - 返回的最大结果数量
+    ///
+    /// # 返回
+    /// 返回按时间戳排序的记忆条目列表
+    pub async fn search_with_domain(
+        &self,
+        query: &str,
+        domain: Option<crate::types::MemoryDomain>,
+        limit: usize,
+    ) -> Result<Vec<MemoryEntry>> {
+        debug!("执行带域过滤的关键词检索: query=?, domain={:?}, limit={}", query, domain, limit);
+
+        let pattern = format!("%{}%", query);
+
+        let (query_str, domain_filter) = if let Some(d) = domain {
+            let domain_str = match d {
+                crate::types::MemoryDomain::Private => "private",
+                crate::types::MemoryDomain::Public => "public",
+            };
+            (format!("{} AND domain = ?", query_str), Some(domain_str))
+        } else {
+            (query_str, None)
+        };
+
+        let rows = sqlx::query(
+            r#"
+            SELECT key, value, category, task_id, timestamp, expires_at, domain, namespace, pushed_targets
+            FROM memories
+            WHERE (value LIKE ?1 OR key LIKE ?1)
+              AND (expires_at IS NULL OR expires_at > ?2)
+              AND (?3 IS NULL OR domain = ?3)
+            ORDER BY timestamp DESC
+            LIMIT ?4
+            "#
+        )
+        .bind(&pattern)
+        .bind(chrono::Utc::now().timestamp())
+        .bind(domain_filter.as_deref())
+        .bind(limit as i64)
+        .fetch_all(&self.pool)
+        .await
+        .context("查询记忆条目失败")?;
+
+        // 解析结果
+        let mut results = Vec::new();
+
+        for row in rows {
+            let key: String = row.get("key");
+            let value_str: String = row.get("value");
+            let category_str: String = row.get("category");
+            let task_id: Option<String> = row.get("task_id");
+            let timestamp: i64 = row.get("timestamp");
+            let expires_at: Option<i64> = row.get("expires_at");
+            let domain_str: String = row.get("domain");
+            let namespace: String = row.get("namespace");
+            let pushed_targets_str: String = row.get("pushed_targets");
+
+            let value: serde_json::Value = serde_json::from_str(&value_str)
+                .unwrap_or_else(|_| serde_json::Value::String(value_str.clone()));
+
+            let category = match category_str.as_str() {
+                "Execution" => MemoryCategory::Execution,
+                "Context" => MemoryCategory::Context,
+                "Result" => MemoryCategory::Result,
+                "Error" => MemoryCategory::Error,
+                "Checkpoint" => MemoryCategory::Checkpoint,
+                _ => MemoryCategory::Context,
+            };
+
+            let domain = match domain_str.as_str() {
+                "private" => crate::types::MemoryDomain::Private,
+                "public" => crate::types::MemoryDomain::Public,
+                _ => crate::types::MemoryDomain::Public,
+            };
+
+            let pushed_targets: Vec<String> = serde_json::from_str(&pushed_targets_str)
+                .unwrap_or_default();
+
+            let entry = MemoryEntry {
+                key,
+                value,
+                expires_at,
+                category,
+                task_id,
+                timestamp,
+                domain,
+                namespace,
+                pushed_targets,
+            };
+
+            results.push(entry);
+        }
+
+        debug!("带域过滤的关键词检索完成，返回 {} 条结果", results.len());
         Ok(results)
     }
 
@@ -307,7 +479,7 @@ impl MemoryCore {
 
         let row = sqlx::query(
             r#"
-            SELECT key, value, category, task_id, timestamp, expires_at
+            SELECT key, value, category, task_id, timestamp, expires_at, domain, namespace, pushed_targets
             FROM memories
             WHERE key = ?1
               AND (expires_at IS NULL OR expires_at > ?2)
@@ -326,6 +498,9 @@ impl MemoryCore {
             let task_id: Option<String> = row.get("task_id");
             let timestamp: i64 = row.get("timestamp");
             let expires_at: Option<i64> = row.get("expires_at");
+            let domain_str: String = row.get("domain");
+            let namespace: String = row.get("namespace");
+            let pushed_targets_str: String = row.get("pushed_targets");
 
             let value: serde_json::Value = serde_json::from_str(&value_str)
                 .unwrap_or_else(|_| serde_json::Value::String(value_str.clone()));
@@ -339,6 +514,15 @@ impl MemoryCore {
                 _ => MemoryCategory::Context,
             };
 
+            let domain = match domain_str.as_str() {
+                "private" => crate::types::MemoryDomain::Private,
+                "public" => crate::types::MemoryDomain::Public,
+                _ => crate::types::MemoryDomain::Public,
+            };
+
+            let pushed_targets: Vec<String> = serde_json::from_str(&pushed_targets_str)
+                .unwrap_or_default();
+
             Ok(Some(MemoryEntry {
                 key,
                 value,
@@ -346,6 +530,9 @@ impl MemoryCore {
                 category,
                 task_id,
                 timestamp,
+                domain,
+                namespace,
+                pushed_targets,
             }))
         } else {
             Ok(None)

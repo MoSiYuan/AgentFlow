@@ -3,27 +3,29 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.93+-orange.svg)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/MoSiYuan/AgentFlow)
+[![Version](https://img.shields.io/badge/version-3.0.0-green.svg)](https://github.com/MoSiYuan/AgentFlow/releases)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/MoSiYuan/AgentFlow/actions)
 
-**Single-process, high-performance AI agent task orchestration system written in pure Rust.**
+**纯 Rust 实现的单进程高性能 AI Agent 任务编排系统**
 
-## 🎯 Version 3.0 (Pure Rust)
+## 🎯 版本 3.0（纯 Rust 重写）
 
-AgentFlow v3 is a complete rewrite in Rust, featuring a revolutionary **single-process architecture** where the Master server also acts as the Worker, eliminating the need for separate worker processes.
+AgentFlow v3 是完全用 Rust 重写的版本，采用革命性的**单进程架构**，Master 服务器同时充当 Worker，无需独立的工作进程。
 
-### Key Features
+### 核心特性
 
-- ✅ **Single Binary** - One executable, no dependencies
-- ✅ **Single Process** - Master = Worker, no inter-process communication
-- ✅ **High Performance** - Built on Tokio async runtime, < 100MB memory
-- ✅ **Direct Execution** - Executes Claude CLI directly via tokio::process
-- ✅ **Vector Memory** - SQLite-based vector indexing for semantic retrieval
-- ✅ **Sandbox Security** - Complete path validation and process isolation
-- ✅ **REST API** - 14 HTTP endpoints
-- ✅ **Real-time** - WebSocket and SSE streaming support
+- ✅ **单一二进制** - 一个可执行文件，无外部依赖
+- ✅ **单进程架构** - Master = Worker，无需进程间通信
+- ✅ **高性能** - 基于 Tokio 异步运行时，内存占用 < 100MB
+- ✅ **直接执行** - 通过 tokio::process 直接调用 Claude CLI
+- ✅ **向量记忆** - 基于 SQLite 的向量索引和语义检索
+- ✅ **沙箱安全** - 完整的路径验证和进程隔离
+- ✅ **REST API** - 提供 14 个 HTTP 端点
+- ✅ **实时通信** - WebSocket 和 SSE 流式传输支持
 
-## 📚 Documentation
+## 📚 文档导航
 
-### Quick Navigation
+### 快速索引
 
 **快速试用**：
 - [部署指南](DEPLOYMENT_GUIDE.md) - 快速安装和配置
@@ -76,9 +78,9 @@ mindmap
 
 ---
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Option 1: One-Click Installation (Recommended)
+### 方式 1：一键安装（推荐）
 
 #### Linux/macOS
 
@@ -100,16 +102,16 @@ chmod +x install.sh
 irm https://raw.githubusercontent.com/MoSiYuan/AgentFlow/main/scripts/install.ps1 | iex
 ```
 
-### Option 2: Build from Source
+### 方式 2：从源码构建
 
-#### 1. Install Rust
+#### 1. 安装 Rust
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source "$HOME/.cargo/env"
 ```
 
-#### 2. Build AgentFlow
+#### 2. 编译 AgentFlow
 
 ```bash
 cd rust
@@ -117,47 +119,47 @@ export SQLX_OFFLINE=true
 cargo build --release
 ```
 
-#### 3. Run AgentFlow
+#### 3. 运行 AgentFlow
 
 ```bash
 ./target/release/agentflow-master
 ```
 
-Server will start on `http://localhost:6767`
+服务将启动在 `http://localhost:6767`
 
-## 📝 Usage Examples
+## 📝 使用示例
 
-### Operating Modes
+### 运行模式
 
-AgentFlow supports three operating modes:
+AgentFlow 支持三种运行模式：
 
-#### 1. Local Mode (Default)
+#### 1. 本地模式（默认）
 
-Execute tasks locally using Claude CLI:
+使用 Claude CLI 在本地执行任务：
 
 ```bash
 agentflow server local
-# or simply
+# 或简单地
 agentflow server
 ```
 
-#### 2. Cloud Mode (with Webhooks)
+#### 2. 云端模式（支持 Webhooks）
 
-Integrate with AI platforms like Zhipu AI:
+与 AI 平台（如智谱 AI）集成：
 
 ```bash
 agentflow server cloud
 ```
 
-#### 3. Planner-Only Mode
+#### 3. 仅规划模式
 
-Plan and validate tasks without execution:
+规划和验证任务但不执行：
 
 ```bash
 agentflow server planner-only
 ```
 
-### Create a Task
+### 创建任务
 
 ```bash
 curl -X POST http://localhost:6767/api/v1/tasks \
@@ -169,26 +171,88 @@ curl -X POST http://localhost:6767/api/v1/tasks \
   }'
 ```
 
-### Execute a Task (with SSE streaming)
+### 执行任务（带 SSE 流式传输）
 
 ```bash
 curl -X POST http://localhost:6767/api/v1/tasks/1/execute \
   -H "Accept: text/event-stream"
 ```
 
-### Query Task Status
+### 查询任务状态
 
 ```bash
 curl http://localhost:6767/api/v1/tasks/1
 ```
 
-## 🌐 Cloud Mode & Zhipu AI Integration
+## 🔌 REST API 端点
 
-AgentFlow can integrate with Zhipu AI (智谱清言) to create an AI-powered task orchestration system.
+AgentFlow 提供 14 个 HTTP 端点用于任务管理和系统控制。
 
-### Quick Setup
+### 认证
 
-1. **Configure Zhipu AI Integration**
+所有 API 请求需要 Bearer Token 认证：
+
+```bash
+# 使用 Session Token
+curl http://localhost:6767/api/v1/tasks \
+  -H "Authorization: Bearer <session_token>"
+
+# 使用 API Key
+curl http://localhost:6767/api/v1/tasks \
+  -H "Authorization: Bearer sk_<timestamp>_<signature>"
+```
+
+### 任务管理
+
+| 方法 | 端点 | 描述 | 认证 |
+|------|------|------|------|
+| POST | `/api/v1/tasks` | 创建新任务 | Bearer |
+| GET | `/api/v1/tasks` | 获取任务列表 | Bearer |
+| GET | `/api/v1/tasks/:id` | 获取任务详情 | Bearer |
+| POST | `/api/v1/tasks/:id/execute` | 执行任务 | Bearer |
+| DELETE | `/api/v1/tasks/:id` | 取消任务 | Bearer |
+| PATCH | `/api/v1/tasks/:id/priority` | 更新任务优先级 | Bearer |
+
+### 集群管理
+
+| 方法 | 端点 | 描述 | 认证 |
+|------|------|------|------|
+| GET | `/api/v1/cluster/leader` | 查看当前 Leader | Bearer |
+| GET | `/api/v1/cluster/nodes` | 查看所有节点 | Bearer |
+| GET | `/api/v1/cluster/status` | 查看集群状态 | Bearer |
+
+### 工作流管理
+
+| 方法 | 端点 | 描述 | 认证 |
+|------|------|------|------|
+| POST | `/api/v1/workflows` | 创建工作流 | Bearer |
+| GET | `/api/v1/workflows/:name` | 获取工作流详情 | Bearer |
+| POST | `/api/v1/workflows/:name/execute` | 执行工作流 | Bearer |
+
+### 系统管理
+
+| 方法 | 端点 | 描述 | 认证 |
+|------|------|------|------|
+| GET | `/health` | 健康检查 | 无需认证 |
+| GET | `/api/v1/stats` | 系统统计信息 | Bearer |
+| POST | `/api/v1/login` | 用户登录获取 Session | 无需认证 |
+
+### 实时通信
+
+| 类型 | 端点 | 描述 |
+|------|------|------|
+| WebSocket | `/ws/task` | 任务执行实时流 |
+| SSE | `/api/v1/stream` | 服务器发送事件流 |
+
+详细的 API 文档请参考：[API 文档](docs/API_REFERENCE.md)
+
+## 🌐 云端模式与智谱 AI 集成
+
+AgentFlow 可以与智谱清言（Zhipu AI）集成，构建 AI 驱动的任务编排系统。
+
+### 快速配置
+
+1. **配置智谱 AI 集成**
 
 Edit `~/.agentflow/config.toml`:
 
@@ -558,6 +622,204 @@ cargo run --bin agentflow-master
 - **高可用**: 主备切换和故障恢复
 
 详见: [集群部署指南](docs/CLUSTERING.md)
+
+---
+
+## 🛠️ Skill 开发示例
+
+AgentFlow 支持通过 Claude CLI 的 Skills 系统扩展功能。
+
+### 什么是 Skill？
+
+Skill 是可重用的任务模板，包含：
+- **SKILL.md**: Skill 描述和用法
+- **示例代码**: 实际使用案例
+- **配置文件**: 可选的参数配置
+
+### 开发自定义 Skill
+
+#### 1. 创建 Skill 目录结构
+
+```bash
+mkdir -p ~/.claude/skills/my-skill
+cd ~/.claude/skills/my-skill
+```
+
+#### 2. 编写 SKILL.md
+
+```markdown
+# My Custom Skill
+
+## 描述
+这是一个自定义技能，用于...
+
+## 使用场景
+- 场景 1
+- 场景 2
+
+## 示例
+用户：帮我...
+助手：[执行任务]
+```
+
+#### 3. 在任务中使用 Skill
+
+```bash
+# 创建使用 Skill 的任务
+curl -X POST http://localhost:6767/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "使用自定义 Skill",
+    "description": "使用 /my-skill 来完成..."
+  }'
+```
+
+### 内置 Skills
+
+AgentFlow 默认包含以下 Skills：
+
+| Skill | 功能 | 文档 |
+|-------|------|------|
+| `/commit` | Git 提交代码 | [Commit Skill](docs/skills/commit.md) |
+| `/agentflow` | AgentFlow 任务管理 | [AgentFlow Skill](docs/skills/agentflow.md) |
+| `/test` | 运行测试 | [Test Skill](docs/skills/test.md) |
+| `/build` | 构建项目 | [Build Skill](docs/skills/build.md) |
+| `/lint` | 代码检查 | [Lint Skill](docs/skills/lint.md) |
+
+更多 Skill 开发详情请参考：[技能集成指南](docs/SKILL_INTEGRATION.md)
+
+---
+
+## 🐛 常见问题（FAQ）
+
+### Q1: 启动时提示 "Claude CLI not found"
+
+**A**: 请确保已安装 Claude Code CLI 并添加到 PATH：
+
+```bash
+# 安装 Claude CLI
+npm install -g @anthropic-ai/claude-code
+
+# 验证安装
+claude --version
+
+# 配置 API Key
+claude auth
+```
+
+### Q2: SQLite 数据库锁定
+
+**A**: v3.0 单进程架构下不支持多实例并发写入同一数据库文件。解决方案：
+
+1. 使用多实例部署时，为每个实例配置独立数据库：
+   ```bash
+   AGENTFLOW_DATABASE_URL=sqlite:///var/lib/agentflow/instance1/agentflow.db
+   ```
+
+2. 或等待 v3.1+ 版本的分布式队列支持
+
+### Q3: 如何修改默认端口？
+
+**A**: 有三种方式修改（优先级从高到低）：
+
+1. **命令行参数**：
+   ```bash
+   agentflow-master --port 8080
+   ```
+
+2. **环境变量**：
+   ```bash
+   export AGENTFLOW_SERVER_PORT=8080
+   ```
+
+3. **配置文件**：编辑 `~/.agentflow/config.toml`
+   ```toml
+   [server]
+   port = 8080
+   ```
+
+### Q4: 任务一直处于 pending 状态
+
+**A**: 可能的原因和解决方法：
+
+1. **未配置 Claude API Key**：
+   ```bash
+   claude auth  # 配置 API Key
+   ```
+
+2. **服务未正常启动**：
+   ```bash
+   curl http://localhost:6767/health  # 检查健康状态
+   ```
+
+3. **日志查看错误**：
+   ```bash
+   journalctl -u agentflow-master -f  # systemd
+   # 或
+   docker logs agentflow-master -f  # Docker
+   ```
+
+### Q5: 如何启用认证？
+
+**A**: 编辑配置文件或设置环境变量：
+
+```bash
+# 启用认证
+export AUTH_ENABLED=true
+export AUTH_USERNAME=admin
+export AUTH_PASSWORD=your_secure_password
+export AUTH_API_KEY_SECRET=your_32_char_secret
+```
+
+然后登录获取 Session：
+
+```bash
+curl -X POST http://localhost:6767/api/v1/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"your_secure_password"}'
+```
+
+### Q6: 支持哪些平台？
+
+**A**: AgentFlow 支持：
+- ✅ **macOS** (x86_64, ARM64)
+- ✅ **Linux** (x86_64, ARM64)
+- ✅ **Windows** (WSL2, native support coming soon)
+
+### Q7: 如何升级到最新版本？
+
+**A**:
+
+```bash
+# 如果使用一键安装
+curl -fsSL https://raw.githubusercontent.com/MoSiYuan/AgentFlow/main/scripts/install.sh | bash
+
+# 如果从源码构建
+cd /path/to/AgentFlow
+git pull origin main
+cd rust
+cargo build --release
+```
+
+### Q8: 生产环境建议配置
+
+**A**: 参考生产部署指南：
+
+- **systemd 部署**: [部署示例](deployment/examples/systemd/)
+- **Docker 部署**: [部署示例](deployment/examples/docker/)
+- **Kubernetes 部署**: [部署示例](deployment/examples/kubernetes/)
+
+关键配置：
+- 启用认证 (`AUTH_ENABLED=true`)
+- 配置日志轮转
+- 设置资源限制（内存 100MB，CPU 50%）
+- 使用 Nginx 反向代理
+
+### 更多问题？
+
+- 查看完整文档：[文档导航](#-文档导航)
+- 提交 Issue：[GitHub Issues](https://github.com/MoSiYuan/AgentFlow/issues)
+- 加入讨论：[GitHub Discussions](https://github.com/MoSiYuan/AgentFlow/discussions)
 
 ---
 

@@ -494,7 +494,7 @@ cargo run --bin agentflow-master
 ./target/release/agentflow-master
 
 # 方式 3: 自定义配置
-AGENTFLOW_PORT=8080 \
+AGENTFLOW_PORT=6767 \
 AGENTFLOW_DB_PATH=./agentflow.db \
 cargo run --bin agentflow-master
 ```

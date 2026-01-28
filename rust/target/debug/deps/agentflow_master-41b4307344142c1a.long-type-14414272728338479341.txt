@@ -1,0 +1,2 @@
+<AsyncStream<Result<Result<Event, Error>, _>, {async block@/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/async-stream-0.3.6/src/lib.rs:193:9: 193:59}> as Stream>::Item == Result<Event, _>
+AsyncStream<std::result::Result<std::result::Result<axum::response::sse::Event, axum::Error>, _>, {async block@/Users/jiangxiaolong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/async-stream-0.3.6/src/lib.rs:193:9: 193:59}>

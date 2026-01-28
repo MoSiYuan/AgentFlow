@@ -1,0 +1,35 @@
+[package]
+name = "agentflow-master"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "AgentFlow Master Server - HTTP API and WebSocket Server"
+
+[dependencies]
+# Workspace dependencies
+agentflow-core = { path = "../agentflow-core" }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+reqwest = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+dotenvy = { workspace = true }
+clap = { workspace = true }
+
+# Additional dependencies
+futures = "0.3"
+tokio-tungstenite = "0.26"
+headers = "0.4"
+async-stream = "0.3"

@@ -2,9 +2,11 @@
 //!
 //! 提供完整的 Prompt 构建功能，包括系统指令、记忆检索和任务整合
 
+use crate::memory::MemoryCore;
 use crate::types::{MemoryCategory, MemoryEntry};
 use anyhow::{Context, Result};
 use serde_json::json;
+use std::path::PathBuf;
 use tracing::{debug, warn};
 
 /// Prompt 构建器配置
@@ -41,28 +43,24 @@ impl Default for PromptBuilderConfig {
 impl PromptBuilderConfig {
     /// 创建默认系统指令
     fn default_system_instruction() -> String {
-        r#"你是一个专业的 AI 任务执行助手，负责完成各种开发和运维任务。
+        r#"## Role
+你是 AgentFlow Execution Engine，而非 Chat Assistant。
 
-## 核心原则
-1. **安全第一**：始终验证操作的安全性，避免破坏性操作
-2. **明确沟通**：清晰说明你的理解和计划
-3. **逐步执行**：将复杂任务分解为简单步骤
-4. **验证结果**：确保每个步骤都正确完成
+## Core Directives
+1. **Action First**: 不说 "I suggest"，直接 "I will..."
+2. **Tool Usage**: 优先使用 Bash 执行命令，而非生成代码片段
+3. **Git Mandatory**: 任何实质性代码修改后，必须执行 `git add && git commit`
+4. **Self-Healing**: 命令报错时，尝试分析并修复，不要直接停止
+5. **No Questions**: 不要问"你想运行哪一个？"，直接执行最合理的操作
 
-## 工作流程
-1. 理解任务需求
-2. 分析当前状态
-3. 制定执行计划
-4. 逐步实施
-5. 验证结果
+## Protocol
+- 在行动前先思考步骤（但不输出思考过程）
+- 执行后简要报告结果
+- 失败时主动尝试替代方案
 
-## 注意事项
-- 在执行前确认所有前提条件
-- 优先使用非破坏性方法
-- 保持良好的代码风格和文档
-- 及时报告问题和风险
-
-开始执行任务。"#.to_string()
+## Important
+- 用户给你的任务是明确的指令，不是讨论的话题
+- 默认情况下，直接执行；只有遇到真正危险的操作时才询问"#.to_string()
     }
 
     /// 创建自定义配置
@@ -85,6 +83,8 @@ impl PromptBuilderConfig {
 pub struct PromptBuilder {
     /// 构建器配置
     config: PromptBuilderConfig,
+    /// 工作目录路径
+    workspace_path: PathBuf,
 }
 
 impl PromptBuilder {
@@ -99,6 +99,26 @@ impl PromptBuilder {
     pub fn new() -> Self {
         Self {
             config: PromptBuilderConfig::default(),
+            workspace_path: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
+        }
+    }
+
+    /// 使用指定工作目录创建 Prompt 构建器
+    ///
+    /// # 参数
+    /// * `path` - 工作目录路径
+    ///
+    /// # 示例
+    /// ```
+    /// use agentflow_core::executor::PromptBuilder;
+    /// use std::path::PathBuf;
+    ///
+    /// let builder = PromptBuilder::with_workspace(PathBuf::from("/path/to/project"));
+    /// ```
+    pub fn with_workspace(path: PathBuf) -> Self {
+        Self {
+            config: PromptBuilderConfig::default(),
+            workspace_path: path,
         }
     }
 
@@ -115,7 +135,27 @@ impl PromptBuilder {
     /// let builder = PromptBuilder::with_config(config);
     /// ```
     pub fn with_config(config: PromptBuilderConfig) -> Self {
-        Self { config }
+        Self {
+            config,
+            workspace_path: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
+        }
+    }
+
+    /// 读取项目配置文件
+    ///
+    /// 如果 {workspace}/AGENTFLOW.md 存在，读取其内容
+    ///
+    /// # 返回
+    /// * `Some(String)` - 配置文件内容
+    /// * `None` - 配置文件不存在或读取失败
+    fn load_project_config(&self) -> Option<String> {
+        let config_path = self.workspace_path.join("AGENTFLOW.md");
+
+        if config_path.exists() {
+            std::fs::read_to_string(&config_path).ok()
+        } else {
+            None
+        }
     }
 
     /// 构建完整的 Prompt
@@ -162,22 +202,75 @@ impl PromptBuilder {
         // 1. 添加系统指令
         parts.push(self.build_system_section());
 
-        // 2. 添加记忆上下文（如果有）
+        // 2. 添加项目配置（如果存在）
+        if let Some(project_config) = self.load_project_config() {
+            parts.push(self.build_project_config_section(&project_config));
+        }
+
+        // 3. 添加记忆上下文（如果有）
         if self.config.include_memory && !memories.is_empty() {
             let memory_section = self.build_memory_section(memories);
             parts.push(memory_section);
         }
 
-        // 3. 添加任务描述
+        // 4. 添加任务描述
         parts.push(self.build_task_section(task));
 
-        // 4. 组合所有部分
+        // 5. 组合所有部分
         let full_prompt = parts.join("\n\n");
 
         debug!("Prompt 构建完成，总长度: {}", full_prompt.len());
 
-        // 5. 检查并截断（如果超过 token 限制）
+        // 6. 检查并截断（如果超过 token 限制）
         self.truncate_if_needed(&full_prompt)
+    }
+
+    /// 构建带自动记忆检索的 Prompt
+    ///
+    /// 自动调用 MemoryCore::search() 查找相关记忆，无需手动提供记忆条目
+    ///
+    /// # 参数
+    /// * `task` - 任务描述
+    /// * `memory_core` - 记忆核心引用
+    ///
+    /// # 返回
+    /// 返回包含相关记忆的完整 Prompt
+    ///
+    /// # 示例
+    /// ```no_run
+    /// # use agentflow_core::executor::PromptBuilder;
+    /// # use agentflow_core::memory::MemoryCore;
+    /// #
+    /// # async fn example() -> anyhow::Result<()> {
+    /// let builder = PromptBuilder::new();
+    /// let memory_core = MemoryCore::new("/path/to/memory.db").await?;
+    ///
+    /// let task = "实现一个用户登录功能";
+    /// let prompt = builder.build_with_memory_search(task, &memory_core).await;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn build_with_memory_search(
+        &self,
+        task: &str,
+        memory_core: &crate::memory::MemoryCore,
+    ) -> String {
+        debug!("执行自动记忆检索，任务: {}", task);
+
+        // 1. 搜索相关记忆（top 3）
+        let memories = match memory_core.search(task, 3).await {
+            Ok(m) => {
+                debug!("成功检索到 {} 条相关记忆", m.len());
+                m
+            },
+            Err(e) => {
+                warn!("记忆检索失败: {}, 使用空记忆", e);
+                Vec::new()
+            }
+        };
+
+        // 2. 调用现有的 build 方法
+        self.build(task, &memories)
     }
 
     /// 构建带元数据的 Prompt
@@ -202,24 +295,75 @@ impl PromptBuilder {
         // 1. 添加系统指令
         parts.push(self.build_system_section());
 
-        // 2. 添加元数据（如果启用）
+        // 2. 添加项目配置（如果存在）
+        if let Some(project_config) = self.load_project_config() {
+            parts.push(self.build_project_config_section(&project_config));
+        }
+
+        // 3. 添加元数据（如果启用）
         if self.config.include_metadata {
             let metadata_section = self.build_metadata_section(metadata);
             parts.push(metadata_section);
         }
 
-        // 3. 添加记忆上下文
+        // 4. 添加记忆上下文
         if self.config.include_memory && !memories.is_empty() {
             let memory_section = self.build_memory_section(memories);
             parts.push(memory_section);
         }
 
-        // 4. 添加任务描述
+        // 5. 添加任务描述
         parts.push(self.build_task_section(task));
 
-        // 5. 组合并处理长度限制
+        // 6. 组合并处理长度限制
         let full_prompt = parts.join("\n\n");
         self.truncate_if_needed(&full_prompt)
+    }
+
+    /// 构建带自动记忆检索的 Prompt
+    ///
+    /// 自动调用 MemoryCore::search() 查找相关记忆
+    ///
+    /// # 参数
+    /// * `task` - 任务描述
+    /// * `memory_core` - 记忆核心引用
+    ///
+    /// # 返回
+    /// 返回包含相关记忆的完整 Prompt
+    ///
+    /// # 示例
+    /// ```no_run
+    /// # use agentflow_core::executor::PromptBuilder;
+    /// # use agentflow_core::memory::MemoryCore;
+    /// #
+    /// # async fn example() {
+    /// # let builder = PromptBuilder::new();
+    /// # let memory_core = MemoryCore::new("memory.db").await.unwrap();
+    /// let task = "修复登录 bug";
+    /// let prompt = builder.build_with_memory_search(&task, &memory_core).await;
+    /// # }
+    /// ```
+    pub async fn build_with_memory_search(
+        &self,
+        task: &str,
+        memory_core: &MemoryCore,
+    ) -> String {
+        debug!("构建带自动记忆检索的 Prompt: task={}", task);
+
+        // 搜索相关记忆（top 3）
+        let memories = match memory_core.search(task, 3).await {
+            Ok(m) => {
+                debug!("检索到 {} 条相关记忆", m.len());
+                m
+            }
+            Err(e) => {
+                warn!("记忆检索失败: {}, 使用空记忆", e);
+                Vec::new()
+            }
+        };
+
+        // 调用现有的 build 方法
+        self.build(task, &memories)
     }
 
     /// 构建系统指令部分
@@ -228,6 +372,20 @@ impl PromptBuilder {
             "{}\n{}",
             "## 系统指令".to_string(),
             self.config.system_instruction
+        )
+    }
+
+    /// 构建项目配置部分
+    ///
+    /// # 参数
+    /// * `project_config` - 项目配置内容
+    ///
+    /// # 返回
+    /// 格式化的项目配置字符串
+    fn build_project_config_section(&self, project_config: &str) -> String {
+        format!(
+            "## 项目专属配置\n\n{}",
+            project_config
         )
     }
 

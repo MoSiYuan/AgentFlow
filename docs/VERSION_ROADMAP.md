@@ -43,12 +43,72 @@ Task Execution → Claude CLI 分析 → 提取关键信息 → 存储到记忆
 
 ---
 
-## 🚀 v0.2.1 - CLI 统一与云端联邦 (进行中)
+## 🚀 v0.2.1 - CLI 统一与云端联邦 + Skill 引导增强 (进行中)
 
 **分支**: `feature/0.2.1`
-**状态**: 规划完成，准备实施
+**状态**: Skill 引导增强 ✅ 已完成，CLI/云端联邦规划完成
 
-### 4 个并行开发 Team
+### ✅ Skill 引导增强系统 (已完成)
+
+**完成日期**: 2026-01-28
+
+**核心改进**: 将 AgentFlow 从"谨慎的客服"转变为"不废话的执行引擎"
+
+#### 实现功能
+
+1. **强系统提示词 (Level 1)** ✅
+   - **文件**: [rust/agentflow-core/src/executor/prompt_builder.rs:45](../rust/agentflow-core/src/executor/prompt_builder.rs#L45)
+   - **改动**: 完全重写默认系统指令
+   - **核心原则**:
+     - Action First: 不说 "I suggest"，直接 "I will..."
+     - Tool Usage: 优先使用 Bash 执行命令
+     - Git Mandatory: 修改后必须 `git add && git commit`
+     - Self-Healing: 报错时尝试修复，不直接停止
+     - No Questions: 不问"你想运行哪一个？"，直接执行
+
+2. **自动记忆检索 (Level 3)** ✅
+   - **文件**: [rust/agentflow-core/src/executor/prompt_builder.rs:298](../rust/agentflow-core/src/executor/prompt_builder.rs#L298)
+   - **新方法**: `build_with_memory_search(task, memory_core)`
+   - **功能**: 自动检索 Top 3 相关记忆并注入 Prompt
+   - **特点**: 异步接口，优雅的错误处理
+
+3. **项目级配置 (Level 2)** ✅
+   - **文件**: [rust/agentflow-core/src/executor/prompt_builder.rs:151](../rust/agentflow-core/src/executor/prompt_builder.rs#L151)
+   - **配置文件**: [templates/AGENTFLOW.md.example](../templates/AGENTFLOW.md.example)
+   - **功能**: 读取 `{workspace}/AGENTFLOW.md` 项目配置
+   - **内容**: 构建系统、测试工作流、关键技能、调试策略
+
+#### 四级 Prompt 架构
+
+```
+Level 1 [Hardcoded]   → ✅ 强系统提示词 (AgentFlow Execution Engine)
+       ↓
+Level 2 [Project]      → ✅ AGENTFLOW.md 项目配置
+       ↓
+Level 3 [Memory]       → ✅ 自动记忆检索 (Top 3)
+       ↓
+Level 4 [Task]         → ✅ 用户指令
+```
+
+#### 交付物
+
+- `rust/agentflow-core/src/executor/prompt_builder.rs` (增强版)
+- `templates/AGENTFLOW.md.example` (配置模板，61 行)
+- 完整的 Rust Doc 注释
+- 向后兼容现有功能
+
+#### 对 v0.2.2 的影响
+
+由于 v0.2.1 已实现核心功能，v0.2.2 可简化为：
+- ✅ **移除**: Phase 1 (PromptBuilder 引擎) - 已完成
+- ✅ **移除**: Phase 2 (强系统提示词) - 已完成
+- ✅ **移除**: Phase 4 (Memory Injection) - 已完成
+- 🔄 **保留增强**: Phase 3 (AGENTFLOW.md) - 基础版已完成
+- 🆕 **新增**: Git 状态注入 (Level 4)
+
+---
+
+### 4 个并行开发 Team (原始计划)
 
 #### Team A: CLI & 配置层
 - 统一 `agentflow` 命令
@@ -105,43 +165,104 @@ Task Execution → Claude CLI 分析 → 提取关键信息 → 存储到记忆
 
 ---
 
-## 🎯 v0.2.2 - Skill 引导强化系统 (规划中)
+## 🎯 v0.2.2 - Skill 引导强化系统 (待调整)
 
-**状态**: 概念设计完成
+**状态**: ⚠️ 部分功能已在 v0.2.1 实现，需要重新规划
 
-### 核心目标
+**重要变更**: 由于 v0.2.1 提前实现了 Skill 引导核心功能，v0.2.2 需要重新定位
 
-**问题**: 默认的 Claude CLI 倾向于做"谨慎的客服"，不符合 AgentFlow "全自动 DevOps" 的场景
+### 核心目标 (已部分实现)
 
-**解决方案**: 构建四级 Prompt 构造器，强制 Agent 变成"不废话、猛冲猛打、懂项目规则的高级工程师"
+**原问题**: 默认的 Claude CLI 倾向于做"谨慎的客服"，不符合 AgentFlow "全自动 DevOps" 的场景
+
+**解决方案**: ✅ 已在 v0.2.1 实现核心功能
+
+### v0.2.1 已完成功能
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| **Phase 1**: PromptBuilder 引擎 | ✅ v0.2.1 | 已实现完整架构 |
+| **Phase 2**: 强系统提示词 | ✅ v0.2.1 | 5个 Core Directives |
+| **Phase 3**: AGENTFLOW.md | ⚠️ v0.2.1 | 基础版已实现 |
+| **Phase 4**: Memory Injection | ✅ v0.2.1 | `build_with_memory_search()` |
+
+### v0.2.2 新目标
+
+#### 🆕 新增功能
+
+1. **Git 状态注入 (Level 4)**
+   - 获取当前 Git 分支、状态、未提交改动
+   - 注入到 Prompt 作为运行时上下文
+   - 帮助 Agent 理解当前工作状态
+
+2. **增强 AGENTFLOW.md (Phase 3 完善)**
+   - 添加更多配置选项
+   - 支持条件规则（基于文件类型、路径等）
+   - 提供更丰富的示例
+
+3. **Few-Shot Examples 增强**
+   - 改进历史记忆的格式化
+   - 添加时间戳和相关性评分
+   - 优化 Prompt 结构
+
+4. **完整测试验证**
+   - Test Case 1: 强制执行（"跑个测试"）
+   - Test Case 2: 遵循项目规则（msbuild vs make）
+   - Test Case 3: 基于经验（Shader Cache）
 
 ---
 
-### 核心架构：四级 Prompt 构造器
+### 实施任务清单 (调整后)
 
-**文件**: `rust/agentflow-core/src/llm/prompt_builder.rs` (新建)
+#### Phase 1: Git 状态注入 (High Priority)
 
-```
-Level 1 [Hardcoded]   → 核心身份与行为准则
-       ↓
-Level 2 [Project]      → 项目专属技能集 (AGENTFLOW.md)
-       ↓
-Level 3 [Memory]       → 相关历史经验 (SQLite 检索)
-       ↓
-Level 4 [Context]      → 运行时上下文 (Git 状态)
-       ↓
-Level 5 [Task]         → 用户指令
-```
-
----
-
-### 实施任务清单
-
-#### Phase 1: 实现 PromptBuilder 引擎 (High Priority)
+**文件**: `rust/agentflow-core/src/executor/prompt_builder.rs`
 
 **任务**:
-1. 定义结构体 `PromptBuilder`
-2. 实现 `build(task: &str) -> Result<String>` 方法
+1. 添加 `build_with_git_context()` 方法
+2. 调用 `git2` crate 获取状态
+3. 格式化 Git 信息注入 Prompt
+
+**示例输出**:
+```markdown
+## Git 状态
+- 分支: feature/new-ui
+- 未提交文件: 3 个
+- 最近提交: feat: add user authentication (2h ago)
+```
+
+#### Phase 2: AGENTFLOW.md 增强 (Medium Priority)
+
+**文件**: `templates/AGENTFLOW.md.example`
+
+**任务**:
+1. 添加更多配置示例
+2. 支持路径匹配规则
+3. 提供常见项目模板
+
+#### Phase 3: Few-Shot Examples 优化 (Medium Priority)
+
+**任务**:
+1. 改进记忆格式化（添加时间戳）
+2. 相关性评分显示
+3. 优化 Token 使用
+
+#### Phase 4: 集成测试 (High Priority)
+
+**文件**: `rust/agentflow-core/tests/skill_guidance_integration.rs`
+
+**任务**:
+1. Test Case 1: 强制执行验证
+2. Test Case 2: 项目规则遵循验证
+3. Test Case 3: 经验复用验证
+
+---
+
+### 旧版任务清单 (已废弃)
+
+#### ~~Phase 1: 实现 PromptBuilder 引擎~~ ✅ v0.2.1
+
+**任务**:
 3. 读取 `{workspace_path}/AGENTFLOW.md`
 4. 调用 `MemoryCore::search(task, top_k=3)`
 5. 获取 Git 状态
@@ -327,16 +448,25 @@ git commit -m "Run tests: all passed"
 
 **AgentFlow 正在快速演进**：
 
-- **v0.2.0** (已完成): 记忆工作流基础
-- **v0.2.1** (进行中): CLI 统一 + 云端联邦
-- **v0.2.2** (规划中): Skill 引导强化
-- **v0.3.0** (未来): 生产就绪完整版
+- **v0.2.0** (✅ 已完成): 记忆工作流基础
+- **v0.2.1** (🔄 进行中): CLI 统一 + 云端联邦 + **Skill 引导增强 ✅**
+- **v0.2.2** (⚠️ 待调整): Git 状态注入 + 完整测试
+- **v0.3.0** (🔮 未来): 生产就绪完整版
 
 **关键特性**:
 - 🧠 智能记忆系统
 - 🌐 云端分布式架构
 - 💬 AI 对话集成
 - 🛠️ 一键部署
-- 🎯 Skill 引导强化
+- 🎯 **Skill 引导强化** (v0.2.1 新增 ✅)
+  - ✅ 强系统提示词（Action First）
+  - ✅ 自动记忆检索（Top 3）
+  - ✅ 项目级配置（AGENTFLOW.md）
+
+**最新进展** (2026-01-28):
+- ✅ 完成 v0.2.1 Skill 引导增强系统
+- ✅ PromptBuilder 升级为四级架构
+- ✅ 从"谨慎客服"转变为"执行引擎"
+- 🔄 v0.2.2 需要重新规划（部分功能已在 v0.2.1 实现）
 
 **开发策略**: 并行 Team，快速迭代，持续交付 🚀
